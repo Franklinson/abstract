@@ -1,7 +1,7 @@
 venv
 db.sqlite3
 migrations
-__pychache__
+__pychache__/
 abstract_files
 event_images
 .env

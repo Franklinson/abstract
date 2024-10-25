@@ -7,7 +7,7 @@ from django.contrib.auth import authenticate, login as auth_login, logout
 
 
 def home(request):
-    return render(request, 'home.html')
+    return render(request, 'account/home.html')
 
 
 def register(request):
@@ -36,7 +36,7 @@ def register(request):
     else:
         form = UsersCreationForm()
 
-    return render(request, 'register.html', {'form': form})
+    return render(request, 'account/register.html', {'form': form})
 
 
 def login(request):
@@ -54,7 +54,7 @@ def login(request):
         else:
             messages.error(request, 'Invalid email or password.')
     
-    return render(request, 'login.html')
+    return render(request, 'account/login.html')
 
 
 def logout_view(request):
