@@ -4,6 +4,7 @@ from django.contrib import messages
 from django.shortcuts import render, redirect
 from .forms import UsersCreationForm
 from django.contrib.auth import authenticate, login as auth_login, logout
+from abstract.models import *
 
 
 def home(request):
@@ -61,3 +62,19 @@ def logout_view(request):
     logout(request)
     messages.success(request, 'You have successfully logged out.')
     return redirect('home')  # Redirect to login or homepage
+
+
+def author_dashboard(request):
+    # Get the current user's abstracts
+    abstracts = request.user.abstract_set.all()
+    
+    # Count the total number of abstracts
+    total_abstract = abstracts.count()
+    total_accepted = Abstract.objects.filter(status='Accepted').count()
+    
+    context = {
+        'abstracts': abstracts,
+        'total_abstract': total_abstract,
+        'total_accepted': total_accepted,
+    }
+    return render(request, 'account/author_dashboard.html', context)

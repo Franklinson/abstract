@@ -88,7 +88,7 @@ def edit_abstract(request, id):
             # Send confirmation email on edit
             send_mail(
                 subject='Abstract Updated Successfully',
-                message=f'Your abstract with ID {abstract.abstract_id} has been updated successfully.',
+                message=f'Your abstract with ID {abstract.id} has been updated successfully.',
                 from_email=settings.DEFAULT_FROM_EMAIL,
                 recipient_list=[request.user.email],
                 fail_silently=False,

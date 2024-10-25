@@ -1,0 +1,36 @@
+<br>
+<div class="row">
+  <div class="col-md">
+    <div class="card card-body bg-light shadow-sm">
+      <a class="btn btn-outline-info btn-sm btn-block" href="{% url 'home' %}">Update Details</a>
+      <a class="btn btn-outline-warning btn-sm btn-block" href="#">Make Payment</a>
+      <a class="btn btn-outline-info btn-sm btn-block" href="{% url 'create_abstract' %}">Add New Abstract</a>
+    </div>
+  </div>
+
+  <div class="col">
+    <div class="col-md">
+      <div class="card text-center text-white bg-success mb-3" id="orders-delivered">
+        <div class="card-header bg-success">
+          <h5 class="card-title">Total Abstracts</h5>
+        </div>
+        <div class="card-body">
+          <h3 class="card-title">{{ total_abstract }}</h3>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col">
+    <div class="col-md">
+      <div class="card text-center text-white bg-info mb-3" id="orders-pending">
+        <div class="card-header bg-info">
+          <h5 class="card-title">Abstracts Accepted</h5>
+        </div>
+        <div class="card-body">
+          <h3 class="card-title">{{ total_accepted }}</h3>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -4,12 +4,78 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Create Abstract</title>
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script> <!-- Include jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f9f9f9;
+            margin: 0;
+            padding: 20px;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        form {
+            max-width: 600px;
+            margin: auto;
+            padding: 20px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
         .inline-form {
-            margin-bottom: 20px;
-            padding: 10px;
+            margin-bottom: 15px;
+            padding: 15px;
             border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: #f7f7f7;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input[type="text"], input[type="email"] {
+            width: calc(100% - 22px);
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        button {
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            background-color: #007bff;
+            color: white;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        #add-author, #add-presenter {
+            margin-top: 15px;
+            background-color: #28a745;
+        }
+        #add-author:hover, #add-presenter:hover {
+            background-color: #218838;
+        }
+        .remove-author, .remove-presenter {
+            background-color: #dc3545;
+        }
+        .remove-author:hover, .remove-presenter:hover {
+            background-color: #c82333;
+        }
+        .section-header {
+            margin-top: 20px;
+            margin-bottom: 10px;
+            font-size: 1.5em;
+            border-bottom: 2px solid #007bff;
+            padding-bottom: 5px;
+            color: #333;
         }
     </style>
 </head>
@@ -19,7 +85,7 @@
         {% csrf_token %}
         {{ abstract_form.as_p }}
         
-        <h2>Authors</h2>
+        <div class="section-header">Authors</div>
         <div id="authors">
             {{ author_formset.management_form }}
             {% for form in author_formset %}
@@ -31,7 +97,7 @@
         </div>
         <button type="button" id="add-author">Add Another Author</button>
         
-        <h2>Presenters</h2>
+        <div class="section-header">Presenters</div>
         <div id="presenters">
             {{ presenter_formset.management_form }}
             {% for form in presenter_formset %}
@@ -110,6 +176,5 @@
             updateManagementForm('presenterinformation_set', presenterFormIndex);
         });
     </script>
-    
 </body>
 </html>
