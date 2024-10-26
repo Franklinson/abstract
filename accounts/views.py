@@ -64,17 +64,27 @@ def logout_view(request):
     return redirect('home')  # Redirect to login or homepage
 
 
+
 def author_dashboard(request):
-    # Get the current user's abstracts
+    # Get the current user's abstracts (those they submitted)
     abstracts = request.user.abstract_set.all()
-    
-    # Count the total number of abstracts
+
+    # Check if the user is a reviewer and, if so, retrieve assigned abstracts
+    is_reviewer = hasattr(request.user, 'reviewer')  # Checks if the user has a `Reviewer` profile
+    assigned_abstracts = Assignment.objects.filter(reviewer=request.user.reviewer) if is_reviewer else []
+
+    # Count the total number of abstracts submitted by the user
     total_abstract = abstracts.count()
-    total_accepted = Abstract.objects.filter(status='Accepted').count()
-    
+
+    # Count only accepted abstracts by the user
+    total_accepted = abstracts.filter(status='Accepted').count()
+
+    # Context for rendering the template
     context = {
         'abstracts': abstracts,
         'total_abstract': total_abstract,
         'total_accepted': total_accepted,
+        'is_reviewer': is_reviewer,
+        'assigned_abstracts': assigned_abstracts,
     }
     return render(request, 'account/author_dashboard.html', context)

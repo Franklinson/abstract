@@ -2,6 +2,7 @@ from django.core.mail import send_mail
 from django.forms import inlineformset_factory
 from django.shortcuts import render, redirect
 from django.conf import settings
+from django.contrib.auth.decorators import login_required
 from .forms import *
 from .models import *
 import uuid
@@ -24,11 +25,11 @@ def create_abstract(request):
             
             # Save the abstract
             abstract = abstract_form.save(commit=False)
-            abstract.user = request.user  # Set the user as the current user
+            abstract.user = request.user 
             
             # Generate a unique ID starting with 'COND-'
-            unique_id = f'COND-{uuid.uuid4().hex[:8].upper()}'  # First 8 characters of UUID
-            abstract.abstract_id = unique_id  # Assuming you have an abstract_id field in your model
+            unique_id = f'COND-{uuid.uuid4().hex[:8].upper()}'
+            abstract.abstract_id = unique_id 
             abstract.save()
 
             # Save authors and presenters
@@ -42,11 +43,11 @@ def create_abstract(request):
                 subject='Abstract Submission Confirmation',
                 message=f'Thank you for your submission! Your abstract ID is {unique_id}.',
                 from_email=settings.DEFAULT_FROM_EMAIL,
-                recipient_list=[request.user.email],  # Send to the current user
+                recipient_list=[request.user.email],
                 fail_silently=False,
             )
 
-            return redirect('home')  # Redirect to a success page
+            return redirect('author_dashboard')
 
     else:
         abstract_form = AbstractForm()
@@ -94,7 +95,7 @@ def edit_abstract(request, id):
                 fail_silently=False,
             )
 
-            return redirect('home', id=abstract.id)  # Redirect to abstract detail or another page
+            return redirect('author_dashboard', id=abstract.id)
 
     else:
         # Pre-fill the forms with existing data
@@ -128,7 +129,7 @@ def delete_abstract(request, id):
         )
 
         messages.success(request, 'Abstract and associated data deleted successfully.')
-        return redirect('home')  # Redirect to the abstract list or another page
+        return redirect('author_dashboard')
 
     return render(request, 'abstract/confirm_delete.html', {'abstract': abstract})
 
@@ -137,3 +138,78 @@ def delete_abstract(request, id):
 def abstract_detail(request, id):
     abstract = get_object_or_404(Abstract, id=id)
     return render(request, 'abstract/abstract_detail.html', {'abstract': abstract})
+
+
+
+def create_assignment(request):
+    if request.method == 'POST':
+        form = AssignmentForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect('home')  
+    else:
+        form = AssignmentForm()
+
+    return render(request, 'abstract/assignment_form.html', {'form': form})
+
+
+
+# def create_reviewer(request):
+#     if request.method == 'POST':
+#         form = ReviewerForm(request.POST)
+#         if form.is_valid():
+#             form.save()
+#             return redirect('home')
+#     else:
+#         form = ReviewerForm()
+
+#     return render(request, 'abstract/reviewer_form.html', {'form': form})
+
+
+# @login_required
+def create_reviewer(request):
+    if request.method == 'POST':
+        form = ReviewerForm(request.POST)
+        if form.is_valid():
+            reviewer = form.save(commit=False)
+            reviewer.email = request.user 
+            reviewer.save()
+            return redirect('home')
+    else:
+        form = ReviewerForm()
+
+    return render(request, 'abstract/reviewer_form.html', {'form': form, 'user_email': request.user.email})
+
+
+# for the chair
+def assign_reviewers(request, abstract_id):
+    # Fetch the abstract
+    abstract = get_object_or_404(Abstract, id=abstract_id)
+
+    # Get reviewers with matching expertise (same track as the abstract)
+    matching_reviewers = Reviewer.objects.filter(expertise_area=abstract.track)
+
+    # Prepare reviewer data with assignment counts
+    reviewer_data = [
+        {
+            'reviewer': reviewer,
+            'assigned_count': Assignment.objects.filter(reviewer=reviewer).count()  # Count of abstracts assigned to the reviewer
+        }
+        for reviewer in matching_reviewers
+    ]
+
+    if request.method == 'POST':
+        # Retrieve selected reviewers from the form
+        reviewer_ids = request.POST.getlist('reviewer_ids')
+        reviewers_to_assign = Reviewer.objects.filter(id__in=reviewer_ids)
+
+        # Assign each selected reviewer to the abstract
+        for reviewer in reviewers_to_assign:
+            Assignment.objects.get_or_create(abstract=abstract, reviewer=reviewer)
+
+        return redirect('author_dashboard') 
+
+    return render(request, 'abstract/assign_reviewers.html', {
+        'abstract': abstract,
+        'reviewer_data': reviewer_data,
+    })

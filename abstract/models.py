@@ -72,33 +72,33 @@ class Abstract(models.Model):
     attachment = models.FileField(upload_to='abstract_files')
     # event = models.ForeignKey(Event, on_delete=models.CASCADE)
     track = models.ForeignKey(Track, on_delete=models.CASCADE)
-    # author_information = models.ManyToManyField(AuthorInformation, through='AbstractAuthor')
-    # presenter_information = models.ManyToManyField(PresenterInformation, through='AbstractPresenter')
     presentation_type = models.ForeignKey(PresentationType, on_delete=models.CASCADE, null=True)
     status = models.CharField(max_length=10, choices=Choices, default='Pending')
+    reviewers = models.ManyToManyField('Reviewer', related_name='assigned_abstracts', through='Assignment', blank=True)
     date_created = models.DateTimeField(auto_now_add=True, null=True)
 
     def __str__(self):
         return f'{self.abstract_title}  {self.track} {self.date_created}'
     
     
-    
-# class AbstractAuthor(models.Model):
-#     abstract = models.ForeignKey(Abstract, on_delete=models.CASCADE)
-#     author = models.ForeignKey(AuthorInformation, on_delete=models.CASCADE)
-#     author_name = models.CharField(max_length=100, null=True)
-#     email = models.EmailField(max_length=254, null=True)
-#     affiliation = models.CharField(max_length=200, null=True)
-    
 
-#     def __str__(self):
-#         return f'{self.abstract} {self.author}'
+class Reviewer(models.Model):
+    email = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    full_name = models.CharField(max_length=300, null=False, blank=False)
+    expertise_area = models.ForeignKey(Track, on_delete=models.CASCADE, related_name='reviewers')
 
-# class AbstractPresenter(models.Model):
-#     abstract = models.ForeignKey(Abstract, on_delete=models.CASCADE)
-#     presenter = models.ForeignKey(PresenterInformation, on_delete=models.CASCADE)
-#     name = models.CharField(max_length=100, null=True)
-#     email = models.EmailField(max_length=254, null=True)
+    def __str__(self):
+        return self.full_name
 
-#     def __str__(self):
-#         return f'{self.abstract} {self.presenter}'
+
+class Assignment(models.Model):
+    abstract = models.ForeignKey(Abstract, on_delete=models.CASCADE)
+    reviewer = models.ForeignKey(Reviewer, on_delete=models.CASCADE)
+    assigned_at = models.DateTimeField(auto_now_add=True)
+    status = models.CharField(max_length=20, choices=[('assigned', 'Assigned'), ('reviewed', 'Reviewed')], default='assigned')
+
+    class Meta:
+        unique_together = ('abstract', 'reviewer')
+
+    def __str__(self):
+        return f"{self.abstract.abstract_title} -> {self.reviewer.email}"

@@ -1,6 +1,6 @@
 from django import forms
 from django.forms import inlineformset_factory
-from .models import Abstract, AuthorInformation, PresenterInformation
+from .models import *
 
 class AbstractForm(forms.ModelForm):
     class Meta:
@@ -32,3 +32,36 @@ AuthorInformationFormSet = inlineformset_factory(
 PresenterInformationFormSet = inlineformset_factory(
     Abstract, PresenterInformation, form=PresenterInformationForm, extra=1, can_delete=True
 )
+
+
+class ReviewerForm(forms.ModelForm):
+    class Meta:
+        model = Reviewer
+        fields = ['full_name', 'expertise_area']
+        widgets = {
+            'expertise_area': forms.Select(attrs={'class': 'form-control'}),
+        }
+
+    # Optional: Customize labels, add CSS classes, etc.
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['full_name'].widget.attrs.update({'class': 'form-control'})
+
+
+class AssignmentForm(forms.ModelForm):
+    class Meta:
+        model = Assignment
+        fields = ['abstract', 'reviewer', 'status']
+        widgets = {
+            'abstract': forms.Select(attrs={'class': 'form-control'}),
+            'reviewer': forms.Select(attrs={'class': 'form-control'}),
+            'status': forms.Select(attrs={'class': 'form-control'}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['abstract'].queryset = self.fields['abstract'].queryset.select_related('track')
+        self.fields['reviewer'].queryset = self.fields['reviewer'].queryset.select_related('expertise_area')
+
+        # <td><a class="btn btn-sm btn-danger" href="{% url 'assign_reviewers' abstract.id %}" >Assign Reviewers</a></td>
+        # <th>Assign</th>
