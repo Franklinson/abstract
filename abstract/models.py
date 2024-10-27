@@ -1,5 +1,6 @@
 from django.db import models
 from django.conf import settings
+from django.core.validators import MinValueValidator, MaxValueValidator
 
 # event information for which the abstract will be submitted to
 # class Event(models.Model):
@@ -102,3 +103,49 @@ class Assignment(models.Model):
 
     def __str__(self):
         return f"{self.abstract.abstract_title} -> {self.reviewer.email}"
+
+
+
+
+STATUS_CHOICES = (
+    ('Accepted', 'Accepted'),
+    ('Accept Pending Review', 'Accept Pending Review'),
+    ('Rejected', 'Rejected'),
+)
+
+class Reviews(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, null=True)
+    abstract = models.ForeignKey(Abstract, on_delete=models.CASCADE)
+    reviewer = models.ForeignKey(Reviewer, on_delete=models.CASCADE)
+    comment = models.TextField()
+    attachment = models.FileField(upload_to='review_attachment', blank=True, null=True)  # Make attachment optional
+    status = models.CharField(max_length=30, choices=STATUS_CHOICES)
+    presentation = models.ForeignKey(PresentationType, on_delete=models.CASCADE, null=True, blank=True)
+    
+    # Scoring fields, with range constraints for consistency
+    title = models.IntegerField(validators=[MinValueValidator(1), MaxValueValidator(10)]) 
+    content = models.IntegerField(validators=[MinValueValidator(1), MaxValueValidator(10)])
+    relevance = models.IntegerField(validators=[MinValueValidator(1), MaxValueValidator(10)])
+    quality = models.IntegerField(validators=[MinValueValidator(1), MaxValueValidator(10)])
+    clarity = models.IntegerField(validators=[MinValueValidator(1), MaxValueValidator(10)])
+    methods = models.IntegerField(validators=[MinValueValidator(1), MaxValueValidator(10)])  
+    structure = models.IntegerField(validators=[MinValueValidator(1), MaxValueValidator(10)])
+    data_collection = models.IntegerField(validators=[MinValueValidator(1), MaxValueValidator(10)])
+    result = models.IntegerField()
+    conclusion = models.IntegerField(validators=[MinValueValidator(1), MaxValueValidator(10)])
+    total = models.IntegerField(editable=False) 
+
+    class Meta:
+        verbose_name_plural = "Review Scorings"
+
+    def save(self, *args, **kwargs):
+        # Automatically calculate the total score based on all scoring fields
+        self.total = (
+            self.title + self.content + self.relevance + self.quality +
+            self.clarity + self.methods + self.structure +
+            self.data_collection + self.result + self.conclusion
+        )
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f'Review for {self.abstract.abstract_title} by {self.reviewer.full_name}'

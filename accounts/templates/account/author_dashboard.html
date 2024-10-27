@@ -50,7 +50,7 @@
                         <th>Presentation Type</th>
                         <th>Track</th>
                         <th>Date Submitted</th>
-                        <th>Update</th>
+                        <th>Add Review</th>
                         <th>Delete</th>
                     </tr>
 
@@ -62,7 +62,7 @@
                             <td>{{ assignment.abstract.presentation_type }}</td>
                             <td>{{ assignment.abstract.track }}</td>
                             <td>{{ assignment.abstract.date_created|date:"Y-m-d H:i" }}</td>
-                            <td><a class="btn btn-sm btn-info" href="{}">Update</a></td>
+                            <td><a class="btn btn-sm btn-info" href="{% url 'add_review' assignment.abstract.id %}">Add Review</a></td>
                             <td><a class="btn btn-sm btn-danger" href="{}">Delete</a></td>
                         </tr>
                     {% endfor %}

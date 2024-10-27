@@ -63,5 +63,31 @@ class AssignmentForm(forms.ModelForm):
         self.fields['abstract'].queryset = self.fields['abstract'].queryset.select_related('track')
         self.fields['reviewer'].queryset = self.fields['reviewer'].queryset.select_related('expertise_area')
 
+
+
+class ReviewForm(forms.ModelForm):
+    class Meta:
+        model = Reviews
+        fields = [
+            'title', 'content', 'relevance', 'quality', 'clarity',
+            'methods', 'structure', 'data_collection', 'result',
+            'conclusion', 'status', 'comment', 'attachment', 'presentation'
+        ]
+        widgets = {
+            'status': forms.Select(attrs={'class': 'form-control'}),
+            'comment': forms.Textarea(attrs={'class': 'form-control', 'rows': 4}),
+            'attachment': forms.FileInput(attrs={'class': 'form-control'}),
+            'presentation': forms.Select(attrs={'class': 'form-control'}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        scoring_fields = [
+            'title', 'content', 'relevance', 'quality', 'clarity', 
+            'methods', 'structure', 'data_collection', 'result', 'conclusion'
+        ]
+        for field in scoring_fields:
+            self.fields[field].widget = forms.NumberInput(attrs={'class': 'form-control', 'min': 1, 'max': 10})
+
         # <td><a class="btn btn-sm btn-danger" href="{% url 'assign_reviewers' abstract.id %}" >Assign Reviewers</a></td>
         # <th>Assign</th>

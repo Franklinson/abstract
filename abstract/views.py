@@ -213,3 +213,34 @@ def assign_reviewers(request, abstract_id):
         'abstract': abstract,
         'reviewer_data': reviewer_data,
     })
+
+
+
+def add_review(request, abstract_id):
+    # Get the abstract based on the provided ID
+    abstract = get_object_or_404(Abstract, id=abstract_id)
+
+    # Ensure the user is a reviewer
+    if not hasattr(request.user, 'reviewer'):
+        return redirect('author_dashboard')  # Redirect if not a reviewer
+
+    # Initialize the form
+    if request.method == 'POST':
+        form = ReviewForm(request.POST, request.FILES)
+        if form.is_valid():
+            # Save the review instance without committing
+            review = form.save(commit=False)
+            review.user = request.user  # Set the user who submitted the review
+            review.reviewer = request.user.reviewer  # Link to the reviewer's profile
+            review.abstract = abstract  # Link the review to the abstract
+            review.save()  # Save the review instance
+            return redirect('author_dashboard')  # Redirect after successful submission
+    else:
+        form = ReviewForm()
+
+    # Render the template with context
+    context = {
+        'abstract': abstract,
+        'form': form,
+    }
+    return render(request, 'abstract/add_review.html', context)

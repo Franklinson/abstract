@@ -1,0 +1,54 @@
+{% extends 'abstract/main.html' %}
+
+{% block content %}
+<div class="container mt-5">
+    <h2>Review Abstract</h2>
+    
+    <!-- Abstract Details Section -->
+    <div class="card my-3">
+        <div class="card-header bg-primary text-white">
+            <h4>{{ abstract.abstract_title }}</h4>
+        </div>
+        <div class="card-body">
+            <p><strong>Abstract Body:</strong> {{ abstract.abstract }}</p>
+            <p><strong>Keywords:</strong> {{ abstract.keywords }}</p>
+            <p><strong>Submitter:</strong> {{ abstract.user }}</p>
+            <p><strong>Track:</strong> {{ abstract.track }}</p>
+            <p><strong>Presentation Type:</strong> {{ abstract.presentation_type }}</p>
+            <p><strong>Date Submitted:</strong> {{ abstract.date_created|date:"Y-m-d H:i" }}</p>
+        </div>
+    </div>
+
+    <!-- Review Form Section -->
+    <div class="card">
+        <div class="card-header bg-secondary text-white">
+            <h4>Submit Your Review</h4>
+        </div>
+        <div class="card-body">
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                
+                <!-- Scoring Fields -->
+                <div class="row">
+                    {% for field in form %}
+                        <div class="col-md-4 mb-3">
+                            <label>{{ field.label }}</label>
+                            {{ field }}
+                            {% if field.help_text %}
+                                <small class="form-text text-muted">{{ field.help_text }}</small>
+                            {% endif %}
+                            {% if field.errors %}
+                                <div class="text-danger small">{{ field.errors }}</div>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                </div>
+
+                <!-- Submit Button -->
+                <button type="submit" class="btn btn-success">Submit Review</button>
+                <a href="{% url 'author_dashboard' %}" class="btn btn-secondary">Cancel</a>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

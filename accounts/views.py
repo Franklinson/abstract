@@ -88,3 +88,30 @@ def author_dashboard(request):
         'assigned_abstracts': assigned_abstracts,
     }
     return render(request, 'account/author_dashboard.html', context)
+
+
+
+def manager(request):
+    abstracts = Abstract.objects.all()
+    total_abstract = abstracts.count()
+    total_accepted = abstracts.filter(status='Accepted').count()
+    total_pending = abstracts.filter(status='Pending').count()
+    total_rejected = abstracts.filter(status='Rejected').count()
+    total_submitted = abstracts.filter(status='Submitted').count()
+    total_reviewed = abstracts.filter(status='Reviewed').count()
+
+    reviewed = abstracts.filter(status='Reviewed')
+    accepted = abstracts.filter(status='Accepted')
+
+    context = {
+        'abstracts': abstracts,
+        'total_abstract': total_abstract,
+        'total_accepted': total_accepted,
+        'total_pending': total_pending,
+        'total_rejected': total_rejected,
+        'total_submitted': total_submitted,
+        'total_reviewed': total_reviewed,
+        'reviewed': reviewed,
+        'accepted': accepted,
+    }
+    return render(request, 'account/overseer_dashboard.html', context)

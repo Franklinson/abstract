@@ -1,0 +1,80 @@
+<br>
+<div class="row">
+  <div class="col-md">
+      <div class="card card-body">
+          <a class="btn btn-outline-info  btn-sm btn-block" href="{% url 'author_dashboard' %}">Update Details</a>
+          <a class="btn btn-outline-warning  btn-sm btn-block" href="#">Make Payment</a>
+          <a class="btn btn-outline-info  btn-sm btn-block" href="{% url 'create_abstract' %}">Add New Abstract</a>
+
+      </div>
+  </div>
+
+  <div class="row">
+    <div class="col-md-2">
+      <div class="card text-center text-white bg-primary mb-3">
+        <div class="card-header">
+          <h5 class="card-title">Total Abstract</h5>
+        </div>
+        <div class="card-body">
+          <h3 class="card-title">{{ total_abstract }}</h3>
+        </div>
+      </div>
+    </div>
+  
+    <div class="col-md-2">
+      <div class="card text-center text-white bg-success mb-3">
+        <div class="card-header">
+          <h5 class="card-title">Total Accepted</h5>
+        </div>
+        <div class="card-body">
+          <h3 class="card-title">{{ total_accepted }}</h3>
+        </div>
+      </div>
+    </div>
+  
+    <div class="col-md-2">
+      <div class="card text-center text-white bg-success mb-3">
+        <div class="card-header">
+          <h5 class="card-title">Total Reviewed</h5>
+        </div>
+        <div class="card-body">
+          <h3 class="card-title">{{ total_reviewed }}</h3>
+        </div>
+      </div>
+    </div>
+  
+    <div class="col-md-2">
+      <div class="card text-center text-white bg-success mb-3">
+        <div class="card-header">
+          <h5 class="card-title">Total Pending</h5>
+        </div>
+        <div class="card-body">
+          <h3 class="card-title">{{ total_pending }}</h3>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-2">
+      <div class="card text-center text-white bg-success mb-3">
+        <div class="card-header">
+          <h5 class="card-title">Total Submitted</h5>
+        </div>
+        <div class="card-body">
+          <h3 class="card-title">{{ total_submitted }}</h3>
+        </div>
+      </div>
+    </div>
+  
+    <div class="col-md-2">
+      <div class="card text-center text-white bg-success mb-3">
+        <div class="card-header">
+          <h5 class="card-title">Total Registered</h5>
+        </div>
+        <div class="card-body">
+          <h3 class="card-title">{{ total_abs }}</h3>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  

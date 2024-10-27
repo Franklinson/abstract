@@ -12,4 +12,5 @@ urlpatterns = [
     path('reviewer/add/', create_reviewer, name='create_reviewer'),
     path('assignment/add/', create_assignment, name='create_assignment'),
     path('abstract/assign/<int:abstract_id>/', assign_reviewers, name='assign_reviewers'),
+    path('abstract/add_review/<int:abstract_id>/', add_review, name='add_review'),
 ]
