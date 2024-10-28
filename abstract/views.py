@@ -230,11 +230,11 @@ def add_review(request, abstract_id):
         if form.is_valid():
             # Save the review instance without committing
             review = form.save(commit=False)
-            review.user = request.user  # Set the user who submitted the review
-            review.reviewer = request.user.reviewer  # Link to the reviewer's profile
-            review.abstract = abstract  # Link the review to the abstract
+            review.user = request.user 
+            review.reviewer = request.user.reviewer 
+            review.abstract = abstract 
             review.save()  # Save the review instance
-            return redirect('author_dashboard')  # Redirect after successful submission
+            return redirect('author_dashboard') 
     else:
         form = ReviewForm()
 
@@ -244,3 +244,134 @@ def add_review(request, abstract_id):
         'form': form,
     }
     return render(request, 'abstract/add_review.html', context)
+
+
+
+def edit_review(request, review_id):
+    # Get the existing review
+    review = get_object_or_404(Reviews, id=review_id)
+
+    # Ensure the user is the reviewer who created this review
+    if review.reviewer.email != request.user:
+        return redirect('author_dashboard')  # Redirect if not authorized
+
+    # Initialize the form with the review instance
+    if request.method == 'POST':
+        form = ReviewForm(request.POST, request.FILES, instance=review)
+        if form.is_valid():
+            form.save()  # Directly save the form with updates
+            return redirect('author_dashboard')  # Redirect after successful submission
+    else:
+        form = ReviewForm(instance=review)  # Pre-fill form with existing review data
+
+    # Render the template with context
+    context = {
+        'abstract': review.abstract,  # Pass the associated abstract for context
+        'form': form,
+    }
+    return render(request, 'abstract/edit_review.html', context)
+
+
+
+def manager_create_abstract(request):
+    if request.method == 'POST':
+        abstract_form = ManagerAbstractForm(request.POST, request.FILES)
+        author_formset = AuthorInformationFormSet(request.POST)
+        presenter_formset = PresenterInformationFormSet(request.POST)
+
+        if (abstract_form.is_valid() and
+                author_formset.is_valid() and
+                presenter_formset.is_valid()):
+            
+            # Save the abstract
+            abstract = abstract_form.save(commit=False)
+            abstract.user = request.user 
+            
+            # Generate a unique ID starting with 'COND-'
+            unique_id = f'COND-{uuid.uuid4().hex[:8].upper()}'
+            abstract.abstract_id = unique_id 
+            abstract.save()
+
+            # Save authors and presenters
+            author_formset.instance = abstract
+            author_formset.save()
+            presenter_formset.instance = abstract
+            presenter_formset.save()
+
+            # Prepare and send email
+            send_mail(
+                subject='Abstract Submission Confirmation',
+                message=f'Thank you for your submission! Your abstract ID is {unique_id}.',
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[request.user.email],
+                fail_silently=False,
+            )
+
+            return redirect('manager')
+
+    else:
+        abstract_form = ManagerAbstractForm()
+        author_formset = AuthorInformationFormSet()
+        presenter_formset = PresenterInformationFormSet()
+
+    return render(request, 'abstract/manager_create_abstract.html', {
+        'abstract_form': abstract_form,
+        'author_formset': author_formset,
+        'presenter_formset': presenter_formset,
+    })
+
+
+def manager_add_review(request, abstract_id):
+    # Get the abstract based on the provided ID
+    abstract = get_object_or_404(Abstract, id=abstract_id)
+
+    # Ensure the user is a reviewer
+    # if not hasattr(request.user, 'reviewer'):
+    #     return redirect('author_dashboard')  # Redirect if not a reviewer
+
+    # Initialize the form
+    if request.method == 'POST':
+        form = ManagerReviewForm(request.POST, request.FILES)
+        if form.is_valid():
+            # Save the review instance without committing
+            review = form.save(commit=False)
+            review.user = request.user 
+            # review.reviewer = request.user.reviewer 
+            review.abstract = abstract 
+            review.save()  # Save the review instance
+            return redirect('manager') 
+    else:
+        form = ManagerReviewForm()
+
+    # Render the template with context
+    context = {
+        'abstract': abstract,
+        'form': form,
+    }
+    return render(request, 'abstract/manager_add_review.html', context)
+
+
+
+def manager_edit_review(request, review_id):
+    # Get the existing review
+    review = get_object_or_404(Reviews, id=review_id)
+
+    # Ensure the user is the reviewer who created this review
+    # if review.reviewer.email != request.user:
+    #     return redirect('author_dashboard')  # Redirect if not authorized
+
+    # Initialize the form with the review instance
+    if request.method == 'POST':
+        form = ManagerReviewForm(request.POST, request.FILES, instance=review)
+        if form.is_valid():
+            form.save()  # Directly save the form with updates
+            return redirect('manager')  # Redirect after successful submission
+    else:
+        form = ManagerReviewForm(instance=review)  # Pre-fill form with existing review data
+
+    # Render the template with context
+    context = {
+        'abstract': review.abstract,  # Pass the associated abstract for context
+        'form': form,
+    }
+    return render(request, 'abstract/nanager_edit_review.html', context)

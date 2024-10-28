@@ -31,7 +31,6 @@ def register(request):
                 fail_silently=False,
             )
 
-            # Success message for the user
             messages.success(request, f'Account was created successfully ')
             return redirect('home')
     else:
@@ -45,7 +44,6 @@ def login(request):
         email = request.POST.get('email')
         password = request.POST.get('password')
 
-        # Authenticate the user
         user = authenticate(request, username=email, password=password)
 
         if user is not None:
@@ -61,31 +59,32 @@ def login(request):
 def logout_view(request):
     logout(request)
     messages.success(request, 'You have successfully logged out.')
-    return redirect('home')  # Redirect to login or homepage
+    return redirect('home')
 
 
 
 def author_dashboard(request):
-    # Get the current user's abstracts (those they submitted)
+    # Get the current user's abstracts and reviews
     abstracts = request.user.abstract_set.all()
+    reviews = Reviews.objects.filter(user=request.user, status__in=['Reviewed', 'Accept Pending Review', 'Accepted', 'Rejected'])
 
-    # Check if the user is a reviewer and, if so, retrieve assigned abstracts
-    is_reviewer = hasattr(request.user, 'reviewer')  # Checks if the user has a `Reviewer` profile
+    # Check if the user is a reviewer and fetch assigned abstracts
+    is_reviewer = hasattr(request.user, 'reviewer')
     assigned_abstracts = Assignment.objects.filter(reviewer=request.user.reviewer) if is_reviewer else []
 
-    # Count the total number of abstracts submitted by the user
+    # Count the total number of abstracts and accepted abstracts
     total_abstract = abstracts.count()
-
-    # Count only accepted abstracts by the user
     total_accepted = abstracts.filter(status='Accepted').count()
+    reviewed_abstracts = Reviews.objects.all()
 
-    # Context for rendering the template
     context = {
         'abstracts': abstracts,
         'total_abstract': total_abstract,
         'total_accepted': total_accepted,
         'is_reviewer': is_reviewer,
         'assigned_abstracts': assigned_abstracts,
+        'reviews': reviews,
+        'reviewed_abstracts': reviewed_abstracts,
     }
     return render(request, 'account/author_dashboard.html', context)
 
@@ -93,6 +92,7 @@ def author_dashboard(request):
 
 def manager(request):
     abstracts = Abstract.objects.all()
+    reviews = Reviews.objects.all()
     total_abstract = abstracts.count()
     total_accepted = abstracts.filter(status='Accepted').count()
     total_pending = abstracts.filter(status='Pending').count()
@@ -113,5 +113,6 @@ def manager(request):
         'total_reviewed': total_reviewed,
         'reviewed': reviewed,
         'accepted': accepted,
+        'reviews': reviews,
     }
     return render(request, 'account/overseer_dashboard.html', context)

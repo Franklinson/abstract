@@ -27,6 +27,7 @@
                         <th>Date Submitted</th>
                         <th>Assign Reviewer</th>
                         <th>Update</th>
+                        <th>Review</th>
                         <th>Delete</th>
                     </tr>
                 </thead>
@@ -42,6 +43,7 @@
                             <td>{{ abstract.date_created|date:"Y-m-d H:i" }}</td>
                             <td><a class="btn btn-sm btn-danger" href="{% url 'assign_reviewers' abstract.id %}" >Assign Reviewers</a></td>
                             <td><a class="btn btn-sm btn-info" href="{% url 'edit_abstract' abstract.id %}">Update</a></td>
+                            <td><a class="btn btn-sm btn-info" href="{% url 'manager_review' abstract.id %}">Review</a></td>
                             <td><a class="btn btn-sm btn-danger" href="{% url 'delete_abstract' abstract.id %}">Delete</a></td>
                         </tr>
                     {% endfor %}
@@ -62,22 +64,22 @@
                         <th>Presentation Type</th>
                         <th>Track</th>
                         <th>Date Submitted</th>
-                        <th>Update</th>
-                        <th>Delete</th>
+                        <th>Total</th>
+                        <th>Edit</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% comment %} # should be reviewed_abstracts {% endcomment %}
-                    {% for abstract in abstracts %} 
+                    {% for abstract in reviews %} 
                         <tr>
                             <td>{{ abstract.id }}</td>
-                            <td>{{ abstract.abstract_title }}</td>
+                            <td>{{ abstract.abstract.abstract_title }}</td>
                             <td>{{ abstract.status }}</td>
-                            <td>{{ abstract.presentation_type }}</td>
-                            <td>{{ abstract.track }}</td>
-                            <td>{{ abstract.date_created|date:"Y-m-d H:i" }}</td>
-                            <td><a class="btn btn-sm btn-info" href="{% url 'edit_abstract' abstract.id %}">Update</a></td>
-                            <td><a class="btn btn-sm btn-danger" href="{% url 'delete_abstract' abstract.id %}">Delete</a></td>
+                            <td>{{ abstract.abstract.presentation_type }}</td>
+                            <td>{{ abstract.abstract.track }}</td>
+                            <td>{{ abstract.abstract.date_created|date:"Y-m-d H:i" }}</td>
+                            <td>{{ abstract.total }}</td>
+                            <td><a class="btn btn-sm btn-danger" href="{% url 'manager_edit_review' abstract.id %}">Edit</a></td>
                         </tr>
                     {% endfor %}
                 </tbody>

@@ -89,5 +89,55 @@ class ReviewForm(forms.ModelForm):
         for field in scoring_fields:
             self.fields[field].widget = forms.NumberInput(attrs={'class': 'form-control', 'min': 1, 'max': 10})
 
-        # <td><a class="btn btn-sm btn-danger" href="{% url 'assign_reviewers' abstract.id %}" >Assign Reviewers</a></td>
-        # <th>Assign</th>
+
+
+class ManagerAbstractForm(forms.ModelForm):
+    class Meta:
+        model = Abstract
+        fields = '__all__'
+        exclude = ('reviewers',)
+
+class AuthorInformationForm(forms.ModelForm):
+    class Meta:
+        model = AuthorInformation
+        fields = ['author_name', 'email', 'affiliation']
+
+class PresenterInformationForm(forms.ModelForm):
+    class Meta:
+        model = PresenterInformation
+        fields = ['name', 'email']
+
+# Inline formsets for authors and presenters
+AuthorInformationFormSet = inlineformset_factory(
+    Abstract, AuthorInformation, form=AuthorInformationForm, extra=1, can_delete=True
+)
+
+PresenterInformationFormSet = inlineformset_factory(
+    Abstract, PresenterInformation, form=PresenterInformationForm, extra=1, can_delete=True
+)
+
+
+
+class ManagerReviewForm(forms.ModelForm):
+    class Meta:
+        model = Reviews
+        fields = [
+            'user', 'title', 'content','relevance', 'quality', 'clarity',
+            'methods', 'structure', 'data_collection', 'result',
+            'conclusion', 'status', 'comment', 'attachment', 'presentation', 'reviewer'
+        ]
+        widgets = {
+            'status': forms.Select(attrs={'class': 'form-control'}),
+            'comment': forms.Textarea(attrs={'class': 'form-control', 'rows': 4}),
+            'attachment': forms.FileInput(attrs={'class': 'form-control'}),
+            'presentation': forms.Select(attrs={'class': 'form-control'}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        scoring_fields = [
+            'title', 'content', 'relevance', 'quality', 'clarity', 
+            'methods', 'structure', 'data_collection', 'result', 'conclusion'
+        ]
+        for field in scoring_fields:
+            self.fields[field].widget = forms.NumberInput(attrs={'class': 'form-control', 'min': 1, 'max': 10})
