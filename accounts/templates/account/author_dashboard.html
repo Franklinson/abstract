@@ -23,6 +23,7 @@
                 <tr>
                     <th>ID</th>
                     <th>Title</th>
+                    <th>Submission ID</th>
                     <th>Status</th>
                     <th>Presentation Type</th>
                     <th>Track</th>
@@ -36,6 +37,7 @@
                     <tr>
                         <td>{{ abstract.id }}</td>
                         <td>{{ abstract.abstract_title }}</td>
+                        <td>{{ abstract.submission_id }}</td>
                         <td>{{ abstract.status }}</td>
                         <td>{{ abstract.presentation_type }}</td>
                         <td>{{ abstract.track }}</td>
@@ -66,6 +68,7 @@
                     <tr>
                         <th>ID</th>
                         <th>Title</th>
+                        <th>Submission ID</th>
                         <th>Status</th>
                         <th>Presentation Type</th>
                         <th>Track</th>
@@ -79,6 +82,7 @@
                         <tr>
                             <td>{{ assignment.abstract.id }}</td>
                             <td>{{ assignment.abstract.abstract_title }}</td>
+                            <td>{{ assignment.abstract.submission_id }}</td>
                             <td>{{ assignment.abstract.status }}</td>
                             <td>{{ assignment.abstract.presentation_type }}</td>
                             <td>{{ assignment.abstract.track }}</td>
@@ -107,6 +111,7 @@
                     <tr>
                         <th>ID</th>
                         <th>Title</th>
+                        <th>Submission ID</th>
                         <th>Status</th>
                         <th>Reviewer Comments</th>
                         <th>Track</th>
@@ -119,6 +124,7 @@
                         <tr>
                             <td>{{ abstract.id }}</td>
                             <td>{{ abstract.abstract.abstract_title }}</td>
+                            <td>{{ abstract.abstract.submission_id }}</td>
                             <td>{{ abstract.status }}</td>
                             
                             <!-- Display comments specific to the reviewed abstract -->

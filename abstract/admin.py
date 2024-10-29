@@ -20,7 +20,7 @@ class PresenterInformationInline(admin.StackedInline):
 # Abstract Admin
 @admin.register(Abstract)
 class AbstractAdmin(admin.ModelAdmin):
-    list_display = ('abstract_title', 'track', 'status', 'presentation_type')
+    list_display = ('abstract_title', 'submission_id', 'track', 'status', 'presentation_type')
     list_filter = ('status', 'track', 'presentation_type')
     search_fields = ('abstract_title', 'keywords', 'track__track_name')
     inlines = [AuthorInformationInline, PresenterInformationInline]

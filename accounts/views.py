@@ -32,7 +32,7 @@ def register(request):
             )
 
             messages.success(request, f'Account was created successfully ')
-            return redirect('home')
+            return redirect('login')
     else:
         form = UsersCreationForm()
 
@@ -49,7 +49,7 @@ def login(request):
         if user is not None:
             auth_login(request, user)
             messages.success(request, f'Welcome back,!')
-            return redirect('home')
+            return redirect('author_dashboard')
         else:
             messages.error(request, 'Invalid email or password.')
     

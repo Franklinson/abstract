@@ -1,6 +1,7 @@
 from django.db import models
 from django.conf import settings
 from django.core.validators import MinValueValidator, MaxValueValidator
+from shortuuid.django_fields import ShortUUIDField
 
 # event information for which the abstract will be submitted to
 # class Event(models.Model):
@@ -73,6 +74,7 @@ class Abstract(models.Model):
     attachment = models.FileField(upload_to='abstract_files')
     # event = models.ForeignKey(Event, on_delete=models.CASCADE)
     track = models.ForeignKey(Track, on_delete=models.CASCADE)
+    submission_id = ShortUUIDField(unique=True, length=6, max_length=30, prefix="COND-", alphabet="1234567890", editable=False)
     presentation_type = models.ForeignKey(PresentationType, on_delete=models.CASCADE, null=True)
     status = models.CharField(max_length=10, choices=Choices, default='Pending')
     reviewers = models.ManyToManyField('Reviewer', related_name='assigned_abstracts', through='Assignment', blank=True)
@@ -121,6 +123,7 @@ class Reviews(models.Model):
     attachment = models.FileField(upload_to='review_attachment', blank=True, null=True)  # Make attachment optional
     status = models.CharField(max_length=30, choices=STATUS_CHOICES)
     presentation = models.ForeignKey(PresentationType, on_delete=models.CASCADE, null=True, blank=True)
+    date_created = models.DateTimeField(auto_now_add=True)
     
     # Scoring fields, with range constraints for consistency
     title = models.IntegerField(validators=[MinValueValidator(1), MaxValueValidator(10)]) 
