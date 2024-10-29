@@ -75,7 +75,7 @@ def author_dashboard(request):
     # Count the total number of abstracts and accepted abstracts
     total_abstract = abstracts.count()
     total_accepted = abstracts.filter(status='Accepted').count()
-    reviewed_abstracts = Reviews.objects.all()
+    reviewed_abstracts = Reviews.objects.filter(user=request.user)
 
     context = {
         'abstracts': abstracts,

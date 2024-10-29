@@ -42,7 +42,7 @@
                             <td>{{ abstract.track }}</td>
                             <td>{{ abstract.date_created|date:"Y-m-d H:i" }}</td>
                             <td><a class="btn btn-sm btn-danger" href="{% url 'assign_reviewers' abstract.id %}" >Assign Reviewers</a></td>
-                            <td><a class="btn btn-sm btn-info" href="{% url 'edit_abstract' abstract.id %}">Update</a></td>
+                            <td><a class="btn btn-sm btn-info" href="{% url 'manager_edit' abstract.id %}">Update</a></td>
                             <td><a class="btn btn-sm btn-info" href="{% url 'manager_review' abstract.id %}">Review</a></td>
                             <td><a class="btn btn-sm btn-danger" href="{% url 'delete_abstract' abstract.id %}">Delete</a></td>
                         </tr>

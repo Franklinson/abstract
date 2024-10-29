@@ -1,4 +1,4 @@
-from django.core.mail import send_mail
+from django.core.mail import send_mail, mail_admins
 from django.forms import inlineformset_factory
 from django.shortcuts import render, redirect
 from django.conf import settings
@@ -8,9 +8,6 @@ from .models import *
 import uuid
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib import messages
-
-
-
 
 
 def create_abstract(request):
@@ -38,12 +35,46 @@ def create_abstract(request):
             presenter_formset.instance = abstract
             presenter_formset.save()
 
-            # Prepare and send email
+            # Send confirmation email to the user
+            user_subject = 'Abstract Submission Confirmation'
+            user_message = f'Thank you for your submission! Your abstract ID is {unique_id}.'
+            user_html_message = f"""
+                <html>
+                    <body>
+                        <p>Thank you for your submission!</p>
+                        <p>Your abstract ID is <strong>{unique_id}</strong>.</p>
+                    </body>
+                </html>
+            """
             send_mail(
-                subject='Abstract Submission Confirmation',
-                message=f'Thank you for your submission! Your abstract ID is {unique_id}.',
+                subject=user_subject,
+                message=user_message,
                 from_email=settings.DEFAULT_FROM_EMAIL,
                 recipient_list=[request.user.email],
+                html_message=user_html_message,
+                fail_silently=False,
+            )
+
+            # Send notification email to admins
+            admin_subject = 'New Abstract Submission'
+            admin_message = (
+                f'A new abstract has been submitted by {request.user.username}.\n'
+                f'Abstract ID: {unique_id}\n'
+                f'Submitted by: {request.user.email}'
+            )
+            admin_html_message = f"""
+                <html>
+                    <body>
+                        <p>A new abstract has been submitted by <strong>{request.user.username}</strong>.</p>
+                        <p><strong>Abstract ID:</strong> {unique_id}</p>
+                        <p><strong>Submitted by:</strong> {request.user.email}</p>
+                    </body>
+                </html>
+            """
+            mail_admins(
+                subject=admin_subject,
+                message=admin_message,
+                html_message=admin_html_message,
                 fail_silently=False,
             )
 
@@ -64,6 +95,10 @@ def create_abstract(request):
 
 def edit_abstract(request, id):
     abstract = get_object_or_404(Abstract, id=id)
+
+    if abstract.status in ["Submitted", "Accepted"]:
+        messages.warning(request, "This abstract cannot be edited as it has been submitted or accepted.")
+        return redirect('author_dashboard')
 
     # Inline formsets for authors and presenters
     AuthorInformationFormSet = inlineformset_factory(Abstract, AuthorInformation, form=AuthorInformationForm, extra=1, can_delete=True)
@@ -186,8 +221,10 @@ def assign_reviewers(request, abstract_id):
     # Fetch the abstract
     abstract = get_object_or_404(Abstract, id=abstract_id)
 
-    # Get reviewers with matching expertise (same track as the abstract)
-    matching_reviewers = Reviewer.objects.filter(expertise_area=abstract.track)
+    # Get reviewers with matching expertise, excluding the submitter
+    matching_reviewers = Reviewer.objects.filter(
+        expertise_area=abstract.track
+    ).exclude(email=abstract.user)
 
     # Prepare reviewer data with assignment counts
     reviewer_data = [
@@ -207,7 +244,7 @@ def assign_reviewers(request, abstract_id):
         for reviewer in reviewers_to_assign:
             Assignment.objects.get_or_create(abstract=abstract, reviewer=reviewer)
 
-        return redirect('author_dashboard') 
+        return redirect('manager') 
 
     return render(request, 'abstract/assign_reviewers.html', {
         'abstract': abstract,
@@ -319,6 +356,61 @@ def manager_create_abstract(request):
         'author_formset': author_formset,
         'presenter_formset': presenter_formset,
     })
+
+
+
+def manager_edit_abstract(request, id):
+    abstract = get_object_or_404(Abstract, id=id)
+
+    # if abstract.status in ["Submitted", "Accepted"]:
+    #     messages.warning(request, "This abstract cannot be edited as it has been submitted or accepted.")
+    #     return redirect('author_dashboard')
+
+    # Inline formsets for authors and presenters
+    AuthorInformationFormSet = inlineformset_factory(Abstract, AuthorInformation, form=AuthorInformationForm, extra=1, can_delete=True)
+    PresenterInformationFormSet = inlineformset_factory(Abstract, PresenterInformation, form=PresenterInformationForm, extra=1, can_delete=True)
+
+    if request.method == 'POST':
+        abstract_form = ManagerAbstractForm(request.POST, request.FILES, instance=abstract)
+        author_formset = AuthorInformationFormSet(request.POST, instance=abstract)
+        presenter_formset = PresenterInformationFormSet(request.POST, instance=abstract)
+
+        if abstract_form.is_valid() and author_formset.is_valid() and presenter_formset.is_valid():
+            # Update the abstract
+            abstract = abstract_form.save(commit=False)
+            abstract.save()
+
+            # Save the formsets for authors and presenters
+            author_formset.instance = abstract
+            author_formset.save()
+
+            presenter_formset.instance = abstract
+            presenter_formset.save()
+
+            # Send confirmation email on edit
+            send_mail(
+                subject='Abstract Updated Successfully',
+                message=f'Your abstract with ID {abstract.id} has been updated successfully.',
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[request.user.email],
+                fail_silently=False,
+            )
+
+            return redirect('manager', id=abstract.id)
+
+    else:
+        # Pre-fill the forms with existing data
+        abstract_form = ManagerAbstractForm(instance=abstract)
+        author_formset = AuthorInformationFormSet(instance=abstract)
+        presenter_formset = PresenterInformationFormSet(instance=abstract)
+
+    return render(request, 'abstract/manager_edit_abstract.html', {
+        'abstract_form': abstract_form,
+        'author_formset': author_formset,
+        'presenter_formset': presenter_formset,
+        'abstract': abstract,
+    })
+
 
 
 def manager_add_review(request, abstract_id):

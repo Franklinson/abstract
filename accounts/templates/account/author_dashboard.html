@@ -5,6 +5,15 @@
 {% include 'account/user_status.html' %}
 <hr>
 
+{% if messages %}
+    <ul class="messages">
+        {% for message in messages %}
+            <li class="{{ message.tags }}">{{ message }}</li>
+        {% endfor %}
+    </ul>
+{% endif %}
+
+
 <div class="row">
     <div class="col-md">
         <!-- My Abstracts Section -->
