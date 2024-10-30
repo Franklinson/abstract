@@ -134,7 +134,7 @@ class Reviews(models.Model):
     methods = models.IntegerField(validators=[MinValueValidator(1), MaxValueValidator(10)])  
     structure = models.IntegerField(validators=[MinValueValidator(1), MaxValueValidator(10)])
     data_collection = models.IntegerField(validators=[MinValueValidator(1), MaxValueValidator(10)])
-    result = models.IntegerField()
+    result = models.IntegerField(validators=[MinValueValidator(1), MaxValueValidator(10)])
     conclusion = models.IntegerField(validators=[MinValueValidator(1), MaxValueValidator(10)])
     total = models.IntegerField(editable=False) 
 

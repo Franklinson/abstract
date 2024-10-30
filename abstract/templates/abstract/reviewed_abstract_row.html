@@ -1,0 +1,13 @@
+{% for abstract in reviewed_abstracts %}
+    <tr>
+        <td>{{ abstract.id }}</td>
+        <td>{{ abstract.abstract.abstract_title }}</td>
+        <td>{{ abstract.abstract.submission_id }}</td>
+        <td>{{ abstract.status }}</td>
+        <td>{{ abstract.comment }}</td>
+        <td>{{ abstract.abstract.track }}</td>
+        <td>{{ abstract.date_created|date:"Y-m-d H:i" }}</td>
+        <td>{{ abstract.total }}</td>
+        <td><a class="btn btn-sm btn-danger" href="{% url 'edit_review' abstract.id %}">Edit</a></td>
+    </tr>
+{% endfor %}

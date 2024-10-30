@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Review Added to Your Abstract</title>
+</head>
+<body>
+    <h2>A Review Has Been Added to Your Abstract</h2>
+    <p>Dear {{ abstract.user.username }},</p>
+    <p>A review has been added to your abstract with ID <strong>{{ abstract.submission_id }}</strong>.</p>
+    <p><strong>Title:</strong> {{ abstract.abstract_title }}</p>
+    <p><strong>Reviewer:</strong> {{ reviewer.full_name }}</p>
+    <p>Please log in to view the details of the review.</p>
+</body>
+</html>

@@ -1,0 +1,20 @@
+{% for abstract in abstracts %}
+    <tr>
+        <td>{{ abstract.id }}</td>
+        <td>{{ abstract.abstract_title }}</td>
+        <td>{{ abstract.submission_id }}</td>
+        <td>{{ abstract.status }}</td>
+        <td>{{ abstract.presentation_type }}</td>
+        <td>{{ abstract.track }}</td>
+        <td>{{ abstract.date_created|date:"Y-m-d H:i" }}</td>
+        <td>
+            {% for review in reviews %}
+                {% if review.abstract == abstract %}
+                    {{ review.comment }}
+                {% endif %}
+            {% endfor %}
+        </td>
+        <td><a class="btn btn-sm btn-info" href="{% url 'edit_abstract' abstract.id %}">Update</a></td>
+        <td><a class="btn btn-sm btn-danger" href="{% url 'delete_abstract' abstract.id %}">Delete</a></td>
+    </tr>
+{% endfor %}

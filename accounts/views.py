@@ -64,18 +64,29 @@ def logout_view(request):
 
 
 def author_dashboard(request):
-    # Get the current user's abstracts and reviews
+    # Get the current user's abstracts and their reviewed abstracts
     abstracts = request.user.abstract_set.all()
-    reviews = Reviews.objects.filter(user=request.user, status__in=['Reviewed', 'Accept Pending Review', 'Accepted', 'Rejected'])
+    reviews = Reviews.objects.filter(
+        user=request.user, 
+        status__in=['Reviewed', 'Accept Pending Review', 'Accepted', 'Rejected']
+    )
 
-    # Check if the user is a reviewer and fetch assigned abstracts
+    # Check if the user is a reviewer and fetch only unreviewed assigned abstracts
     is_reviewer = hasattr(request.user, 'reviewer')
-    assigned_abstracts = Assignment.objects.filter(reviewer=request.user.reviewer) if is_reviewer else []
+    if is_reviewer:
+        # Filter for assigned abstracts that haven't been reviewed by the current user
+        assigned_abstracts = Assignment.objects.filter(
+            reviewer=request.user.reviewer
+        ).exclude(
+            abstract__in=reviews.values_list('abstract', flat=True)
+        )
+    else:
+        assigned_abstracts = []
 
     # Count the total number of abstracts and accepted abstracts
     total_abstract = abstracts.count()
     total_accepted = abstracts.filter(status='Accepted').count()
-    reviewed_abstracts = Reviews.objects.filter(user=request.user)
+    reviewed_abstracts = reviews
 
     context = {
         'abstracts': abstracts,

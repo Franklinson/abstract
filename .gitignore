@@ -5,3 +5,4 @@ __pycache__
 abstract_files
 event_images
 .env
+staticfiles

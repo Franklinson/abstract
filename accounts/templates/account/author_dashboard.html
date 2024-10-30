@@ -1,147 +1,102 @@
 {% extends 'abstract/main.html' %}
 
 {% block content %}
+    {% include 'account/user_status.html' %}
+    <hr>
 
-{% include 'account/user_status.html' %}
-<hr>
+    {% if messages %}
+        <ul class="messages">
+            {% for message in messages %}
+                <li class="{{ message.tags }}">{{ message }}</li>
+            {% endfor %}
+        </ul>
+    {% endif %}
 
-{% if messages %}
-    <ul class="messages">
-        {% for message in messages %}
-            <li class="{{ message.tags }}">{{ message }}</li>
-        {% endfor %}
-    </ul>
-{% endif %}
+    <div class="row">
+        <div class="col-md">
+            
+            <!-- My Abstracts Section -->
+            <strong><h3>My Abstracts</h3></strong>
+            <div class="card card-body">
+                <table class="table table-sm">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Title</th>
+                            <th>Submission ID</th>
+                            <th>Status</th>
+                            <th>Presentation Type</th>
+                            <th>Track</th>
+                            <th>Date Submitted</th>
+                            <th>Comments</th>
+                            <th>Update</th>
+                            <th>Delete</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% with abstracts=abstracts reviews=reviews %}
+        {% include 'abstract/abstract_row.html' %}
+    {% endwith %}
+                    </tbody>
+                </table>
+            </div>
 
+            <!-- Reviewer Specific Section -->
+            {% if is_reviewer %}
+                <br>
 
-<div class="row">
-    <div class="col-md">
-        <!-- My Abstracts Section -->
-        <strong><h3>My Abstracts</h3></strong>
-        <div class="card card-body">
-            <table class="table table-sm">
-                <tr>
-                    <th>ID</th>
-                    <th>Title</th>
-                    <th>Submission ID</th>
-                    <th>Status</th>
-                    <th>Presentation Type</th>
-                    <th>Track</th>
-                    <th>Date Submitted</th>
-                    <th>Comments</th>
-                    <th>Update</th>
-                    <th>Delete</th>
-                </tr>
+                <!-- Assigned Abstracts Section -->
+                <strong><h3>Assigned Abstracts</h3></strong>
+                <div class="card card-body">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Title</th>
+                                <th>Submission ID</th>
+                                <th>Status</th>
+                                <th>Presentation Type</th>
+                                <th>Track</th>
+                                <th>Date Submitted</th>
+                                <th>Comments</th>
+                                <th>Add Review</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% with assigned_abstracts=assigned_abstracts reviews=reviews %}
+        {% include 'abstract/assigned_abstract_row.html' %}
+    {% endwith %}
+                        </tbody>
+                    </table>
+                </div>
 
-                {% for abstract in abstracts %}
-                    <tr>
-                        <td>{{ abstract.id }}</td>
-                        <td>{{ abstract.abstract_title }}</td>
-                        <td>{{ abstract.submission_id }}</td>
-                        <td>{{ abstract.status }}</td>
-                        <td>{{ abstract.presentation_type }}</td>
-                        <td>{{ abstract.track }}</td>
-                        <td>{{ abstract.date_created|date:"Y-m-d H:i" }}</td>
-                        
-                        <!-- Display comments if status is Reviewed or Accept Pending Review -->
-                        <td>
-                            {% for review in reviews %}
-                                {% if review.abstract == abstract %}
-                                    {{ review.comment }}
-                                {% endif %}
-                            {% endfor %}
-                        </td>
-                        
-                        <td><a class="btn btn-sm btn-info" href="{% url 'edit_abstract' abstract.id %}">Update</a></td>
-                        <td><a class="btn btn-sm btn-danger" href="{% url 'delete_abstract' abstract.id %}">Delete</a></td>
-                    </tr>
-                {% endfor %}
-            </table>
+                <br>
+
+                <!-- Reviewed Abstracts Section -->
+                <strong><h3>Reviewed Abstracts</h3></strong>
+                <div class="card card-body">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Title</th>
+                                <th>Submission ID</th>
+                                <th>Status</th>
+                                <th>Reviewer Comments</th>
+                                <th>Track</th>
+                                <th>Date Reviewed</th>
+                                <th>Total</th>
+                                <th>Edit</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% with reviewed_abstracts=reviewed_abstracts %}
+        {% include 'abstract/reviewed_abstract_row.html' %}
+    {% endwith %}
+                        </tbody>
+                    </table>
+                </div>
+            {% endif %}
         </div>
-
-        <!-- Assigned Abstracts Section (for Reviewers) -->
-        {% if is_reviewer %}
-            <br>
-            <strong><h3>Assigned Abstracts</h3></strong>
-            <div class="card card-body">
-                <table class="table table-sm">
-                    <tr>
-                        <th>ID</th>
-                        <th>Title</th>
-                        <th>Submission ID</th>
-                        <th>Status</th>
-                        <th>Presentation Type</th>
-                        <th>Track</th>
-                        <th>Date Submitted</th>
-                        <th>Comments</th>
-                        <th>Add Review</th>
-                    </tr>
-                        
-                    {% for assignment in assigned_abstracts %}
-                    {% if not reviewed_abstracts %}
-                        <tr>
-                            <td>{{ assignment.abstract.id }}</td>
-                            <td>{{ assignment.abstract.abstract_title }}</td>
-                            <td>{{ assignment.abstract.submission_id }}</td>
-                            <td>{{ assignment.abstract.status }}</td>
-                            <td>{{ assignment.abstract.presentation_type }}</td>
-                            <td>{{ assignment.abstract.track }}</td>
-                            <td>{{ assignment.abstract.date_created|date:"Y-m-d H:i" }}</td>
-                            
-                            <!-- Display comments for the abstract if available -->
-                            <td>
-                                {% for review in reviews %}
-                                    {% if review.abstract == assignment.abstract %}
-                                        {{ review.comment }}
-                                    {% endif %}
-                                {% endfor %}
-                            </td>
-                            <td><a class="btn btn-sm btn-info" href="{% url 'add_review' assignment.abstract.id %}">Add Review</a></td>
-                                {% else %}
-                                <td><p>No assigned abstract</p></td>
-                            {% endif %}
-                        </tr>
-                    {% endfor %}
-                </table>
-            </div>
-            <br>
-            <strong><h3>Reviewed Abstracts</h3></strong>
-            <div class="card card-body">
-                <table class="table table-sm">
-                    <tr>
-                        <th>ID</th>
-                        <th>Title</th>
-                        <th>Submission ID</th>
-                        <th>Status</th>
-                        <th>Reviewer Comments</th>
-                        <th>Track</th>
-                        <th>Date Reviewed</th>
-                        <th>Total</th>
-                        <th>Edit</th>
-                    </tr>
-    
-                    {% for abstract in reviewed_abstracts %}
-                        <tr>
-                            <td>{{ abstract.id }}</td>
-                            <td>{{ abstract.abstract.abstract_title }}</td>
-                            <td>{{ abstract.abstract.submission_id }}</td>
-                            <td>{{ abstract.status }}</td>
-                            
-                            <!-- Display comments specific to the reviewed abstract -->
-                            <td>{{abstract.comment}}</td>
-                            
-                            <td>{{ abstract.abstract.track }}</td>
-                            <td>{{ abstract.date_created|date:"Y-m-d H:i" }}</td>
-                            <td>{{ abstract.total }}</td>
-                            <td><a class="btn btn-sm btn-danger" href="{% url 'edit_review' abstract.id %}">Edit</a></td>
-                        </tr>
-                    {% endfor %}
-                </table>
-            </div>
-        {% endif %}
     </div>
-</div>
-
 {% endblock %}
-
-

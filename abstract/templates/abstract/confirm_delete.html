@@ -55,7 +55,7 @@
 
 <div class="container">
     <h2>Confirm Deletion</h2>
-    <p>Are you sure you want to delete the abstract titled "<strong>{{ abstract.abstract_title }}</strong>" (ID: <strong>{{ abstract.id }}</strong>)?</p>
+    <p>Are you sure you want to delete the abstract titled "<strong>{{ abstract.abstract_title }}</strong>" (ID: <strong>{{ abstract.submission_id }}</strong>)?</p>
 
     <form method="post">
         {% csrf_token %}

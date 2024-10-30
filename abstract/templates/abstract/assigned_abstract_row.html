@@ -1,0 +1,23 @@
+{% for assignment in assigned_abstracts %}
+    <tr>
+        <td>{{ assignment.abstract.id }}</td>
+        <td>{{ assignment.abstract.abstract_title }}</td>
+        <td>{{ assignment.abstract.submission_id }}</td>
+        <td>{{ assignment.abstract.status }}</td>
+        <td>{{ assignment.abstract.presentation_type }}</td>
+        <td>{{ assignment.abstract.track }}</td>
+        <td>{{ assignment.abstract.date_created|date:"Y-m-d H:i" }}</td>
+        <td>
+            {% for review in reviews %}
+                {% if review.abstract == assignment.abstract %}
+                    {{ review.comment }}
+                {% endif %}
+            {% endfor %}
+        </td>
+        <td><a class="btn btn-sm btn-info" href="{% url 'add_review' assignment.abstract.id %}">Add Review</a></td>
+    </tr>
+{% empty %}
+    <tr>
+        <td colspan="9" class="text-center">No assigned abstracts</td>
+    </tr>
+{% endfor %}
