@@ -117,7 +117,7 @@ STATUS_CHOICES = (
 
 class Reviews(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, null=True)
-    abstract = models.ForeignKey(Abstract, on_delete=models.CASCADE)
+    abstract = models.ForeignKey(Abstract, on_delete=models.CASCADE, related_name='reviews')
     reviewer = models.ForeignKey(Reviewer, on_delete=models.CASCADE)
     comment = models.TextField()
     attachment = models.FileField(upload_to='review_attachment', blank=True, null=True)  # Make attachment optional
@@ -152,3 +152,16 @@ class Reviews(models.Model):
 
     def __str__(self):
         return f'Review for {self.abstract.abstract_title} by {self.reviewer.full_name}'
+    
+
+
+class EmailLog(models.Model):
+    recipient = models.EmailField()
+    subject = models.CharField(max_length=255)
+    plain_message = models.TextField()
+    html_message = models.TextField(null=True, blank=True)
+    sent_at = models.DateTimeField(auto_now_add=True)
+    abstract = models.ForeignKey('Abstract', on_delete=models.CASCADE, null=True, blank=True)
+
+    def __str__(self):
+        return f"Email to {self.recipient} - {self.subject}"

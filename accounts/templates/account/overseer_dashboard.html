@@ -14,7 +14,7 @@
 
 <div class="row">
     <div class="col-md">
-        <strong><h3> Abstracts</h3></strong>
+        <strong><h3>Abstracts</h3></strong>
         <div class="card card-body">
             <table class="table table-sm">
                 <thead>
@@ -33,8 +33,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                    {% comment %} should be pending_abstracts {% endcomment %}
-                    {% for abstract in abstracts %} 
+                    {% for abstract in abstracts %}
                         <tr>
                             <td>{{ abstract.id }}</td>
                             <td>{{ abstract.abstract_title }}</td>
@@ -43,7 +42,7 @@
                             <td>{{ abstract.presentation_type }}</td>
                             <td>{{ abstract.track }}</td>
                             <td>{{ abstract.date_created|date:"Y-m-d H:i" }}</td>
-                            <td><a class="btn btn-sm btn-danger" href="{% url 'assign_reviewers' abstract.id %}" >Assign Reviewers</a></td>
+                            <td><a class="btn btn-sm btn-danger" href="{% url 'assign_reviewers' abstract.id %}">Assign Reviewers</a></td>
                             <td><a class="btn btn-sm btn-info" href="{% url 'manager_edit' abstract.id %}">Update</a></td>
                             <td><a class="btn btn-sm btn-info" href="{% url 'manager_review' abstract.id %}">Review</a></td>
                             <td><a class="btn btn-sm btn-danger" href="{% url 'delete_abstract' abstract.id %}">Delete</a></td>
@@ -54,7 +53,8 @@
         </div>
 
         <br>
-        {% if reviewed %}
+
+        {% if reviewed.count > 0 %}
         <strong><h3>Reviewed Abstracts</h3></strong>
         <div class="card card-body">
             <table class="table table-sm">
@@ -64,7 +64,7 @@
                         <th>Title</th>
                         <th>Submission ID</th>
                         <th>Status</th>
-                        <th>Presentation Type</th>
+                        <th>Presentation Sugestion</th>
                         <th>Track</th>
                         <th>Date Submitted</th>
                         <th>Total</th>
@@ -72,14 +72,13 @@
                     </tr>
                 </thead>
                 <tbody>
-                    {% comment %} # should be reviewed_abstracts {% endcomment %}
-                    {% for abstract in reviews %} 
+                    {% for abstract in reviews %}
                         <tr>
                             <td>{{ abstract.id }}</td>
                             <td>{{ abstract.abstract.abstract_title }}</td>
                             <td>{{ abstract.abstract.submission_id }}</td>
                             <td>{{ abstract.status }}</td>
-                            <td>{{ abstract.abstract.presentation_type }}</td>
+                            <td>{{ abstract.presentation }}</td>
                             <td>{{ abstract.abstract.track }}</td>
                             <td>{{ abstract.date_created|date:"Y-m-d H:i" }}</td>
                             <td>{{ abstract.total }}</td>
@@ -91,7 +90,9 @@
         </div>
 
         <br>
-        {% elif accepted %}
+        {% endif %}
+
+        {% if accepted.count > 0 %}
         <strong><h3>Accepted Abstracts</h3></strong>
         <div class="card card-body">
             <table class="table table-sm">
@@ -109,8 +110,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                    {% comment %} # should be reviewed_abstracts {% endcomment %}
-                    {% for abstract in abstracts %} 
+                    {% for abstract in accepted %}
                         <tr>
                             <td>{{ abstract.id }}</td>
                             <td>{{ abstract.abstract_title }}</td>
@@ -119,7 +119,7 @@
                             <td>{{ abstract.presentation_type }}</td>
                             <td>{{ abstract.track }}</td>
                             <td>{{ abstract.date_created|date:"Y-m-d H:i" }}</td>
-                            <td><a class="btn btn-sm btn-info" href="{% url 'edit_abstract' abstract.id %}">Update</a></td>
+                            <td><a class="btn btn-sm btn-info" href="{% url 'manager_edit' abstract.id %}">Update</a></td>
                             <td><a class="btn btn-sm btn-danger" href="{% url 'delete_abstract' abstract.id %}">Delete</a></td>
                         </tr>
                     {% endfor %}
@@ -129,6 +129,5 @@
         {% endif %}
     </div>
 </div>
-
 
 {% endblock %}

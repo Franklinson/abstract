@@ -187,6 +187,17 @@ class ReviewsResource(resources.ModelResource):
         export_order = fields
 
 
+class EmailLogResource(resources.ModelResource):
+    abstract = fields.Field(
+        column_name='abstract',
+        attribute='abstract',
+        widget=ForeignKeyWidget(Abstract, 'abstract_title')
+    )
+
+    class Meta:
+        model = EmailLog
+        fields = ('recipient', 'abstract','subject', 'plain_message', 'sent_at')
+
 # Admin Classes for Exporting
 
 class AuthorInformationInline(admin.StackedInline):
@@ -237,6 +248,18 @@ class AssignmentAdmin(ImportExportModelAdmin):
     ordering = ('-assigned_at',)
 
 
+@admin.register(EmailLog)
+class EmailLogtAdmin(ImportExportModelAdmin):
+    resource_class = EmailLogResource
+    list_display = ('recipient', 'abstract','subject', 'plain_message', 'sent_at')
+    list_filter = ('subject', 'sent_at')
+    search_fields = ('abstract__abstract_title', 'recipient')
+    autocomplete_fields = ('abstract', )
+    ordering = ('-sent_at',)
+
+
+
+
 @admin.register(Reviews)
 class ReviewsAdmin(ImportExportModelAdmin):
     resource_class = ReviewsResource
@@ -256,3 +279,6 @@ class ReviewsAdmin(ImportExportModelAdmin):
             )
         }),
     )
+
+admin.site.register(Track)
+admin.site.register(PresentationType)

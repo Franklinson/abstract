@@ -8,12 +8,13 @@
         <td>{{ abstract.track }}</td>
         <td>{{ abstract.date_created|date:"Y-m-d H:i" }}</td>
         <td>
-            {% for review in reviews %}
-                {% if review.abstract == abstract %}
-                    {{ review.comment }}
-                {% endif %}
+            {% for review in abstract.reviews.all %}
+                <p>{{ review.comment }}</p>
+            {% empty %}
+                No comments.
             {% endfor %}
         </td>
+        
         <td><a class="btn btn-sm btn-info" href="{% url 'edit_abstract' abstract.id %}">Update</a></td>
         <td><a class="btn btn-sm btn-danger" href="{% url 'delete_abstract' abstract.id %}">Delete</a></td>
     </tr>

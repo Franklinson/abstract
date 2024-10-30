@@ -7,13 +7,6 @@
         <td>{{ assignment.abstract.presentation_type }}</td>
         <td>{{ assignment.abstract.track }}</td>
         <td>{{ assignment.abstract.date_created|date:"Y-m-d H:i" }}</td>
-        <td>
-            {% for review in reviews %}
-                {% if review.abstract == assignment.abstract %}
-                    {{ review.comment }}
-                {% endif %}
-            {% endfor %}
-        </td>
         <td><a class="btn btn-sm btn-info" href="{% url 'add_review' assignment.abstract.id %}">Add Review</a></td>
     </tr>
 {% empty %}

@@ -48,6 +48,14 @@ def create_abstract(request):
                 fail_silently=False,
             )
 
+            EmailLog.objects.create(
+                recipient=request.user.email,
+                subject=user_subject,
+                plain_message=user_plain_message,
+                html_message=user_html_message,
+                abstract=abstract,
+            )
+
             # Send notification email to admins
             admin_subject = 'New Abstract Submission'
             admin_html_message = render_to_string('emails/admin_notification_email.html', {
@@ -61,6 +69,14 @@ def create_abstract(request):
                 message=admin_plain_message,
                 html_message=admin_html_message,
                 fail_silently=False,
+            )
+
+            EmailLog.objects.create(
+                recipient=request.user.email,
+                subject=admin_subject,
+                plain_message=admin_plain_message,
+                html_message=admin_html_message,
+                abstract=abstract,
             )
 
             return redirect('author_dashboard')
@@ -122,6 +138,14 @@ def edit_abstract(request, id):
                 fail_silently=False,
             )
 
+            EmailLog.objects.create(
+                recipient=request.user.email,
+                subject=user_subject,
+                plain_message=user_plain_message,
+                html_message=user_html_message,
+                abstract=abstract,
+            )
+
             return redirect('author_dashboard')
 
     else:
@@ -162,6 +186,14 @@ def delete_abstract(request, id):
             html_message=user_html_message,  # HTML message
             fail_silently=False,
         )
+
+        EmailLog.objects.create(
+                recipient=request.user.email,
+                subject=user_subject,
+                plain_message=user_plain_message,
+                html_message=user_html_message,
+                abstract=abstract,
+            )
 
         messages.success(request, 'Abstract and associated data deleted successfully.')
         return redirect('author_dashboard')
@@ -261,6 +293,14 @@ def assign_reviewers(request, abstract_id):
                 fail_silently=False,
             )
 
+            EmailLog.objects.create(
+                recipient=request.user.email,
+                subject=reviewer_subject,
+                plain_message=reviewer_plain_message,
+                html_message=reviewer_html_message,
+                abstract=abstract,
+            )
+
         # Update the abstract's status to 'Submitted'
         abstract.status = 'Submitted'
         abstract.save()
@@ -292,6 +332,8 @@ def add_review(request, abstract_id):
             review.user = request.user 
             review.reviewer = request.user.reviewer 
             review.abstract = abstract 
+            abstract.status = 'Reviewed'
+            abstract.save()
             review.save()  # Save the review instance
 
             # 1. Send confirmation email to the abstract's author
@@ -301,15 +343,24 @@ def add_review(request, abstract_id):
                 'reviewer': request.user.reviewer,
                 'review': review
             })
-            author_plain_message = strip_tags(author_html_message)  # Plain text version
+            author_plain_message = strip_tags(author_html_message)
 
             send_mail(
                 subject=author_subject,
-                message=author_plain_message,  # Plain text message
+                message=author_plain_message,
                 from_email=settings.DEFAULT_FROM_EMAIL,
                 recipient_list=[abstract.user.email],
-                html_message=author_html_message,  # HTML message
+                html_message=author_html_message,
                 fail_silently=False,
+            )
+
+            # Log the email to the author
+            EmailLog.objects.create(
+                recipient=abstract.user.email,
+                subject=author_subject,
+                plain_message=author_plain_message,
+                html_message=author_html_message,
+                abstract=abstract,
             )
 
             # 2. Send confirmation email to the reviewer
@@ -319,15 +370,24 @@ def add_review(request, abstract_id):
                 'review': review,
                 'reviewer': request.user.reviewer,
             })
-            reviewer_plain_message = strip_tags(reviewer_html_message)  # Plain text version
+            reviewer_plain_message = strip_tags(reviewer_html_message)
 
             send_mail(
                 subject=reviewer_subject,
-                message=reviewer_plain_message,  # Plain text message
+                message=reviewer_plain_message,
                 from_email=settings.DEFAULT_FROM_EMAIL,
                 recipient_list=[request.user.email],
-                html_message=reviewer_html_message,  # HTML message
+                html_message=reviewer_html_message,
                 fail_silently=False,
+            )
+
+            # Log the email to the reviewer
+            EmailLog.objects.create(
+                recipient=request.user.email,
+                subject=reviewer_subject,
+                plain_message=reviewer_plain_message,
+                html_message=reviewer_html_message,
+                abstract=abstract,
             )
 
             return redirect('author_dashboard')
@@ -410,6 +470,14 @@ def manager_create_abstract(request):
                 fail_silently=False,
             )
 
+            EmailLog.objects.create(
+                recipient=request.user.email,
+                subject=user_subject,
+                plain_message=user_plain_message,
+                html_message=user_html_message,
+                abstract=abstract,
+            )
+
             return redirect('manager')
 
     else:
@@ -470,6 +538,14 @@ def manager_edit_abstract(request, id):
                 fail_silently=False,
             )
 
+            EmailLog.objects.create(
+                recipient=request.user.email,
+                subject=user_subject,
+                plain_message=user_plain_message,
+                html_message=user_html_message,
+                abstract=abstract,
+            )
+
             return redirect('manager')
 
     else:
@@ -525,6 +601,14 @@ def manager_add_review(request, abstract_id):
             fail_silently=False,
         )
 
+        EmailLog.objects.create(
+                recipient=request.user.email,
+                subject=author_subject,
+                plain_message=author_plain_message,
+                html_message=author_html_message,
+                abstract=abstract,
+            )
+
         # 2. Send confirmation email to the reviewer
         reviewer_subject = 'Review Submission Confirmation'
         reviewer_html_message = render_to_string('emails/reviewer_confirmation_notification.html', {
@@ -542,6 +626,14 @@ def manager_add_review(request, abstract_id):
             html_message=reviewer_html_message,  # HTML message
             fail_silently=False,
         )
+
+        EmailLog.objects.create(
+                recipient=request.user.email,
+                subject=reviewer_subject,
+                plain_message=reviewer_plain_message,
+                html_message=reviewer_html_message,
+                abstract=abstract,
+            )
 
     else:
         form = ManagerReviewForm()
