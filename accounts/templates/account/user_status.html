@@ -1,35 +1,44 @@
-<br>
-<div class="row">
-  <div class="col-md">
-    <div class="card card-body bg-light shadow-sm">
-      <a class="btn btn-outline-info btn-sm btn-block" href="{% url 'home' %}">Update Details</a>
-      <a class="btn btn-outline-warning btn-sm btn-block" href="#">Make Payment</a>
-      <a class="btn btn-outline-info btn-sm btn-block" href="{% url 'create_abstract' %}">Add New Abstract</a>
-    </div>
-  </div>
-
-  <div class="col">
-    <div class="col-md">
-      <div class="card text-center text-white bg-success mb-3" id="orders-delivered">
-        <div class="card-header bg-success">
-          <h5 class="card-title">Total Abstracts</h5>
-        </div>
-        <div class="card-body">
-          <h3 class="card-title">{{ total_abstract }}</h3>
-        </div>
+<div class="container my-4">
+  <!-- Actions Panel -->
+  <div class="row mb-4">
+    <div class="col-md-3">
+      <div class="card card-body bg-light shadow-sm">
+        <a class="btn btn-outline-info btn-sm btn-block" href="{% url 'home' %}">
+          <i class="bi bi-pencil-square"></i> Update Details
+        </a>
+        <a class="btn btn-outline-warning btn-sm btn-block" href="#">
+          <i class="bi bi-credit-card"></i> Make Payment
+        </a>
+        <a class="btn btn-outline-info btn-sm btn-block" href="{% url 'create_abstract' %}">
+          <i class="bi bi-file-earmark-plus"></i> Add New Abstract
+        </a>
       </div>
     </div>
-  </div>
 
-  <div class="col">
-    <div class="col-md">
-      <div class="card text-center text-white bg-info mb-3" id="orders-pending">
-        <div class="card-header bg-info">
-          <h5 class="card-title">Abstracts Accepted</h5>
+    <!-- Statistics Panel -->
+    <div class="col-md-9">
+      <div class="row">
+        <div class="col-md-4 mb-3">
+          <div class="card text-center text-white bg-success shadow-sm">
+            <div class="card-header">
+              <h5 class="card-title">Total Abstracts</h5>
+            </div>
+            <div class="card-body">
+              <h3 class="card-title">{{ total_abstract }}</h3>
+            </div>
+          </div>
         </div>
-        <div class="card-body">
-          <h3 class="card-title">{{ total_accepted }}</h3>
+        <div class="col-md-4 mb-3">
+          <div class="card text-center text-white bg-info shadow-sm">
+            <div class="card-header">
+              <h5 class="card-title">Abstracts Accepted</h5>
+            </div>
+            <div class="card-body">
+              <h3 class="card-title">{{ total_accepted }}</h3>
+            </div>
+          </div>
         </div>
+        <!-- Additional statistics cards can be added here if needed -->
       </div>
     </div>
   </div>

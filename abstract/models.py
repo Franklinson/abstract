@@ -81,7 +81,7 @@ class Abstract(models.Model):
     date_created = models.DateTimeField(auto_now_add=True, null=True)
 
     def __str__(self):
-        return f'{self.abstract_title}  {self.track} {self.date_created}'
+        return f'{self.abstract_title}'
     
     
 

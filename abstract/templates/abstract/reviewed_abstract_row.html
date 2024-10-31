@@ -10,4 +10,8 @@
         <td>{{ abstract.total }}</td>
         <td><a class="btn btn-sm btn-danger" href="{% url 'edit_review' abstract.id %}">Edit</a></td>
     </tr>
+    {% empty %}
+    <tr>
+        <td colspan="9" class="text-center">No abstracts sbmitted</td>
+    </tr>
 {% endfor %}

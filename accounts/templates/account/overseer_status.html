@@ -1,80 +1,72 @@
-<br>
-<div class="row">
-  <div class="col-md">
-      <div class="card card-body">
-          <a class="btn btn-outline-info  btn-sm btn-block" href="{% url 'author_dashboard' %}">Dashboard</a>
-          <a class="btn btn-outline-warning  btn-sm btn-block" href="#">Make Payment</a>
-          <a class="btn btn-outline-info  btn-sm btn-block" href="{% url 'manager_create' %}">Add New Abstract</a>
-
-      </div>
-  </div>
-
-  <div class="row">
-    <div class="col-md-2">
-      <div class="card text-center text-white bg-primary mb-3">
-        <div class="card-header">
-          <h5 class="card-title">Total Abstract</h5>
-        </div>
-        <div class="card-body">
-          <h3 class="card-title">{{ total_abstract }}</h3>
-        </div>
-      </div>
-    </div>
-  
-    <div class="col-md-2">
-      <div class="card text-center text-white bg-success mb-3">
-        <div class="card-header">
-          <h5 class="card-title">Total Accepted</h5>
-        </div>
-        <div class="card-body">
-          <h3 class="card-title">{{ total_accepted }}</h3>
-        </div>
-      </div>
-    </div>
-  
-    <div class="col-md-2">
-      <div class="card text-center text-white bg-success mb-3">
-        <div class="card-header">
-          <h5 class="card-title">Total Reviewed</h5>
-        </div>
-        <div class="card-body">
-          <h3 class="card-title">{{ total_reviewed }}</h3>
-        </div>
-      </div>
-    </div>
-  
-    <div class="col-md-2">
-      <div class="card text-center text-white bg-success mb-3">
-        <div class="card-header">
-          <h5 class="card-title">Total Pending</h5>
-        </div>
-        <div class="card-body">
-          <h3 class="card-title">{{ total_pending }}</h3>
-        </div>
-      </div>
-    </div>
-
-    <div class="col-md-2">
-      <div class="card text-center text-white bg-success mb-3">
-        <div class="card-header">
-          <h5 class="card-title">Total Submitted</h5>
-        </div>
-        <div class="card-body">
-          <h3 class="card-title">{{ total_submitted }}</h3>
-        </div>
-      </div>
-    </div>
-  
-    <div class="col-md-2">
-      <div class="card text-center text-white bg-success mb-3">
-        <div class="card-header">
-          <h5 class="card-title">Total Registered</h5>
-        </div>
-        <div class="card-body">
-          <h3 class="card-title">{{ total_abs }}</h3>
+<div class="container">
+  <!-- Actions Panel -->
+  <div class="row mb-4">
+    <div class="col-md-12">
+      <div class="card p-3">
+        <div class="d-flex justify-content-around">
+          <a class="btn btn-outline-info btn-lg" href="{% url 'author_dashboard' %}">
+            <i class="bi bi-speedometer2"></i> Dashboard
+          </a>
+          <a class="btn btn-outline-warning btn-lg" href="#">
+            <i class="bi bi-credit-card"></i> Make Payment
+          </a>
+          <a class="btn btn-outline-info btn-lg" href="{% url 'manager_create' %}">
+            <i class="bi bi-file-earmark-plus"></i> Add New Abstract
+          </a>
         </div>
       </div>
     </div>
   </div>
 
-  
+  <!-- Statistics Panel -->
+  <div class="row text-center">
+    <div class="col-md-2 mb-3">
+      <div class="card bg-primary text-white">
+        <div class="card-header">Total Abstract</div>
+        <div class="card-body">
+          <h3>{{ total_abstract }}</h3>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-2 mb-3">
+      <div class="card bg-success text-white">
+        <div class="card-header">Total Accepted</div>
+        <div class="card-body">
+          <h3>{{ total_accepted }}</h3>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-2 mb-3">
+      <div class="card bg-secondary text-white">
+        <div class="card-header">Total Reviewed</div>
+        <div class="card-body">
+          <h3>{{ total_reviewed }}</h3>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-2 mb-3">
+      <div class="card bg-warning text-white">
+        <div class="card-header">Total Pending</div>
+        <div class="card-body">
+          <h3>{{ total_pending }}</h3>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-2 mb-3">
+      <div class="card bg-info text-white">
+        <div class="card-header">Total Submitted</div>
+        <div class="card-body">
+          <h3>{{ total_submitted }}</h3>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-2 mb-3">
+      <div class="card bg-dark text-white">
+        <div class="card-header">Total Registered</div>
+        <div class="card-body">
+          <h3>{{ total_abs }}</h3>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

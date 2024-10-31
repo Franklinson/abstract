@@ -11,11 +11,15 @@
             {% for review in abstract.reviews.all %}
                 <p>{{ review.comment }}</p>
             {% empty %}
-                No comments.
+                Not reviewed yet.
             {% endfor %}
         </td>
         
         <td><a class="btn btn-sm btn-info" href="{% url 'edit_abstract' abstract.id %}">Update</a></td>
         <td><a class="btn btn-sm btn-danger" href="{% url 'delete_abstract' abstract.id %}">Delete</a></td>
+    </tr>
+    {% empty %}
+    <tr>
+        <td colspan="9" class="text-center">No abstracts sbmitted</td>
     </tr>
 {% endfor %}

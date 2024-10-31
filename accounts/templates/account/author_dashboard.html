@@ -4,98 +4,120 @@
     {% include 'account/user_status.html' %}
     <hr>
 
+    <!-- Display Messages -->
     {% if messages %}
-        <ul class="messages">
+        <div class="container">
             {% for message in messages %}
-                <li class="{{ message.tags }}">{{ message }}</li>
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
             {% endfor %}
-        </ul>
+        </div>
     {% endif %}
 
-    <div class="row">
-        <div class="col-md">
-            
+    <div class="container mt-4">
+        <div class="row">
+
             <!-- My Abstracts Section -->
-            <strong><h3>My Abstracts</h3></strong>
-            <div class="card card-body">
-                <table class="table table-sm">
-                    <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>Title</th>
-                            <th>Submission ID</th>
-                            <th>Status</th>
-                            <th>Presentation Type</th>
-                            <th>Track</th>
-                            <th>Date Submitted</th>
-                            <th>Comments</th>
-                            <th>Update</th>
-                            <th>Delete</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% with abstracts=abstracts reviews=reviews %}
-        {% include 'abstract/abstract_row.html' %}
-    {% endwith %}
-                    </tbody>
-                </table>
+            <div class="col-md-12 mb-4">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-info text-white d-flex align-items-center">
+                        <i class="bi bi-file-earmark-text me-2"></i>
+                        <h5 class="mb-0">My Abstracts</h5>
+                    </div>
+                    <div class="card-body">
+                        <table class="table table-sm table-responsive">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Title</th>
+                                    <th>Submission ID</th>
+                                    <th>Status</th>
+                                    <th>Type</th>
+                                    <th>Track</th>
+                                    <th>Date</th>
+                                    <th>Comments</th>
+                                    <th>Update</th>
+                                    <th>Delete</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% with abstracts=abstracts reviews=reviews %}
+                                    {% include 'abstract/abstract_row.html' %}
+                                {% endwith %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
 
-            <!-- Reviewer Specific Section -->
+            <!-- Reviewer Sections -->
             {% if is_reviewer %}
-                <br>
-
-                <!-- Assigned Abstracts Section -->
-                <strong><h3>Assigned Abstracts</h3></strong>
-                <div class="card card-body">
-                    <table class="table table-sm">
-                        <thead>
-                            <tr>
-                                <th>ID</th>
-                                <th>Title</th>
-                                <th>Submission ID</th>
-                                <th>Status</th>
-                                <th>Presentation Type</th>
-                                <th>Track</th>
-                                <th>Date Submitted</th>
-                                <th>Add Review</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% with assigned_abstracts=assigned_abstracts reviews=reviews %}
-        {% include 'abstract/assigned_abstract_row.html' %}
-    {% endwith %}
-                        </tbody>
-                    </table>
+                <div class="col-md-12 mb-4">
+                    <!-- Assigned Abstracts -->
+                    <div class="card shadow-sm">
+                        <div class="card-header bg-warning text-dark d-flex align-items-center">
+                            <i class="bi bi-clipboard-check me-2"></i>
+                            <h5 class="mb-0">Assigned Abstracts</h5>
+                        </div>
+                        <div class="card-body">
+                            <table class="table table-sm table-responsive">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Title</th>
+                                        <th>Submission ID</th>
+                                        <th>Status</th>
+                                        <th>Type</th>
+                                        <th>Track</th>
+                                        <th>Date Submitted</th>
+                                        <th>Add Review</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% with assigned_abstracts=assigned_abstracts reviews=reviews %}
+                                        {% include 'abstract/assigned_abstract_row.html' %}
+                                    {% endwith %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
                 </div>
 
-                <br>
-
-                <!-- Reviewed Abstracts Section -->
-                <strong><h3>Reviewed Abstracts</h3></strong>
-                <div class="card card-body">
-                    <table class="table table-sm">
-                        <thead>
-                            <tr>
-                                <th>ID</th>
-                                <th>Title</th>
-                                <th>Submission ID</th>
-                                <th>Status</th>
-                                <th>Reviewer Comments</th>
-                                <th>Track</th>
-                                <th>Date Reviewed</th>
-                                <th>Total</th>
-                                <th>Edit</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% with reviewed_abstracts=reviewed_abstracts %}
-        {% include 'abstract/reviewed_abstract_row.html' %}
-    {% endwith %}
-                        </tbody>
-                    </table>
+                <!-- Reviewed Abstracts -->
+                <div class="col-md-12">
+                    <div class="card shadow-sm">
+                        <div class="card-header bg-success text-white d-flex align-items-center">
+                            <i class="bi bi-check-circle me-2"></i>
+                            <h5 class="mb-0">Reviewed Abstracts</h5>
+                        </div>
+                        <div class="card-body">
+                            <table class="table table-sm table-responsive">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Title</th>
+                                        <th>Submission ID</th>
+                                        <th>Status</th>
+                                        <th>Comments</th>
+                                        <th>Track</th>
+                                        <th>Date Reviewed</th>
+                                        <th>Total</th>
+                                        <th>Edit</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% with reviewed_abstracts=reviewed_abstracts %}
+                                        {% include 'abstract/reviewed_abstract_row.html' %}
+                                    {% endwith %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
                 </div>
             {% endif %}
         </div>
     </div>
+
 {% endblock %}

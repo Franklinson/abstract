@@ -1,133 +1,163 @@
 {% extends 'account/main.html' %}
+
 {% block content %}
-{% include 'account/overseer_status.html' %}
-{% load static %}
-<hr>
+    {% include 'account/overseer_status.html' %}
+    {% load static %}
+    <hr>
 
-{% if messages %}
-    <ul class="messages">
-        {% for message in messages %}
-            <li class="{{ message.tags }}">{{ message }}</li>
-        {% endfor %}
-    </ul>
-{% endif %}
-
-<div class="row">
-    <div class="col-md">
-        <strong><h3>Abstracts</h3></strong>
-        <div class="card card-body">
-            <table class="table table-sm">
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Title</th>
-                        <th>Submission ID</th>
-                        <th>Status</th>
-                        <th>Presentation Type</th>
-                        <th>Track</th>
-                        <th>Date Submitted</th>
-                        <th>Assign Reviewer</th>
-                        <th>Update</th>
-                        <th>Review</th>
-                        <th>Delete</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for abstract in abstracts %}
-                        <tr>
-                            <td>{{ abstract.id }}</td>
-                            <td>{{ abstract.abstract_title }}</td>
-                            <td>{{ abstract.submission_id }}</td>
-                            <td>{{ abstract.status }}</td>
-                            <td>{{ abstract.presentation_type }}</td>
-                            <td>{{ abstract.track }}</td>
-                            <td>{{ abstract.date_created|date:"Y-m-d H:i" }}</td>
-                            <td><a class="btn btn-sm btn-danger" href="{% url 'assign_reviewers' abstract.id %}">Assign Reviewers</a></td>
-                            <td><a class="btn btn-sm btn-info" href="{% url 'manager_edit' abstract.id %}">Update</a></td>
-                            <td><a class="btn btn-sm btn-info" href="{% url 'manager_review' abstract.id %}">Review</a></td>
-                            <td><a class="btn btn-sm btn-danger" href="{% url 'delete_abstract' abstract.id %}">Delete</a></td>
-                        </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+    <!-- Display Messages -->
+    {% if messages %}
+        <div class="container">
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
         </div>
+    {% endif %}
 
-        <br>
+    <div class="container mt-4">
+        <div class="row">
+            <!-- Abstracts Section -->
+            <div class="col-md-12 mb-4">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-info text-white d-flex align-items-center">
+                        <i class="bi bi-file-earmark-text me-2"></i>
+                        <h5 class="mb-0">Abstracts</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Title</th>
+                                        <th>Submission ID</th>
+                                        <th>Status</th>
+                                        <th>Type</th>
+                                        <th>Track</th>
+                                        <th>Date Submitted</th>
+                                        <th>Assign Reviewer</th>
+                                        <th>Update</th>
+                                        <th>Review</th>
+                                        <th>Delete</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for abstract in abstracts %}
+                                        <tr>
+                                            <td>{{ abstract.id }}</td>
+                                            <td>{{ abstract.abstract_title }}</td>
+                                            <td>{{ abstract.submission_id }}</td>
+                                            <td>{{ abstract.status }}</td>
+                                            <td>{{ abstract.presentation_type }}</td>
+                                            <td>{{ abstract.track }}</td>
+                                            <td>{{ abstract.date_created|date:"Y-m-d H:i" }}</td>
+                                            <td><a class="btn btn-sm btn-danger" href="{% url 'assign_reviewers' abstract.id %}">Assign Reviewers</a></td>
+                                            <td><a class="btn btn-sm btn-info" href="{% url 'manager_edit' abstract.id %}">Update</a></td>
+                                            <td><a class="btn btn-sm btn-info" href="{% url 'manager_review' abstract.id %}">Review</a></td>
+                                            <td><a class="btn btn-sm btn-danger" href="{% url 'delete_abstract' abstract.id %}">Delete</a></td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
-        {% if reviewed.count > 0 %}
-        <strong><h3>Reviewed Abstracts</h3></strong>
-        <div class="card card-body">
-            <table class="table table-sm">
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Title</th>
-                        <th>Submission ID</th>
-                        <th>Status</th>
-                        <th>Presentation Sugestion</th>
-                        <th>Track</th>
-                        <th>Date Submitted</th>
-                        <th>Total</th>
-                        <th>Edit</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for abstract in reviews %}
-                        <tr>
-                            <td>{{ abstract.id }}</td>
-                            <td>{{ abstract.abstract.abstract_title }}</td>
-                            <td>{{ abstract.abstract.submission_id }}</td>
-                            <td>{{ abstract.status }}</td>
-                            <td>{{ abstract.presentation }}</td>
-                            <td>{{ abstract.abstract.track }}</td>
-                            <td>{{ abstract.date_created|date:"Y-m-d H:i" }}</td>
-                            <td>{{ abstract.total }}</td>
-                            <td><a class="btn btn-sm btn-danger" href="{% url 'manager_edit_review' abstract.id %}">Edit</a></td>
-                        </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+            <!-- Reviewed Abstracts Section -->
+            {% if reviewed.count > 0 %}
+                <div class="col-md-12 mb-4">
+                    <div class="card shadow-sm">
+                        <div class="card-header bg-warning text-dark d-flex align-items-center">
+                            <i class="bi bi-check-circle me-2"></i>
+                            <h5 class="mb-0">Reviewed Abstracts</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-sm">
+                                    <thead>
+                                        <tr>
+                                            <th>ID</th>
+                                            <th>Title</th>
+                                            <th>Submission ID</th>
+                                            <th>Status</th>
+                                            <th>Presentation Suggestion</th>
+                                            <th>Track</th>
+                                            <th>Date Submitted</th>
+                                            <th>Total</th>
+                                            <th>Edit</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for abstract in reviews %}
+                                            <tr>
+                                                <td>{{ abstract.id }}</td>
+                                                <td>{{ abstract.abstract.abstract_title }}</td>
+                                                <td>{{ abstract.abstract.submission_id }}</td>
+                                                <td>{{ abstract.status }}</td>
+                                                <td>{{ abstract.presentation }}</td>
+                                                <td>{{ abstract.abstract.track }}</td>
+                                                <td>{{ abstract.date_created|date:"Y-m-d H:i" }}</td>
+                                                <td>{{ abstract.total }}</td>
+                                                <td><a class="btn btn-sm btn-danger" href="{% url 'manager_edit_review' abstract.id %}">Edit</a></td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+
+            <!-- Accepted Abstracts Section -->
+            {% if accepted.count > 0 %}
+                <div class="col-md-12">
+                    <div class="card shadow-sm">
+                        <div class="card-header bg-success text-white d-flex align-items-center">
+                            <i class="bi bi-check2-square me-2"></i>
+                            <h5 class="mb-0">Accepted Abstracts</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-sm">
+                                    <thead>
+                                        <tr>
+                                            <th>ID</th>
+                                            <th>Title</th>
+                                            <th>Submission ID</th>
+                                            <th>Status</th>
+                                            <th>Type</th>
+                                            <th>Track</th>
+                                            <th>Date Submitted</th>
+                                            <th>Update</th>
+                                            <th>Delete</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for abstract in accepted %}
+                                            <tr>
+                                                <td>{{ abstract.id }}</td>
+                                                <td>{{ abstract.abstract_title }}</td>
+                                                <td>{{ abstract.submission_id }}</td>
+                                                <td>{{ abstract.status }}</td>
+                                                <td>{{ abstract.presentation_type }}</td>
+                                                <td>{{ abstract.track }}</td>
+                                                <td>{{ abstract.date_created|date:"Y-m-d H:i" }}</td>
+                                                <td><a class="btn btn-sm btn-info" href="{% url 'manager_edit' abstract.id %}">Update</a></td>
+                                                <td><a class="btn btn-sm btn-danger" href="{% url 'delete_abstract' abstract.id %}">Delete</a></td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
         </div>
-
-        <br>
-        {% endif %}
-
-        {% if accepted.count > 0 %}
-        <strong><h3>Accepted Abstracts</h3></strong>
-        <div class="card card-body">
-            <table class="table table-sm">
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Title</th>
-                        <th>Submission ID</th>
-                        <th>Status</th>
-                        <th>Presentation Type</th>
-                        <th>Track</th>
-                        <th>Date Submitted</th>
-                        <th>Update</th>
-                        <th>Delete</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for abstract in accepted %}
-                        <tr>
-                            <td>{{ abstract.id }}</td>
-                            <td>{{ abstract.abstract_title }}</td>
-                            <td>{{ abstract.submission_id }}</td>
-                            <td>{{ abstract.status }}</td>
-                            <td>{{ abstract.presentation_type }}</td>
-                            <td>{{ abstract.track }}</td>
-                            <td>{{ abstract.date_created|date:"Y-m-d H:i" }}</td>
-                            <td><a class="btn btn-sm btn-info" href="{% url 'manager_edit' abstract.id %}">Update</a></td>
-                            <td><a class="btn btn-sm btn-danger" href="{% url 'delete_abstract' abstract.id %}">Delete</a></td>
-                        </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-        {% endif %}
     </div>
-</div>
-
 {% endblock %}
