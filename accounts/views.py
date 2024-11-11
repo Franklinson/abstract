@@ -5,7 +5,7 @@ from django.shortcuts import render, redirect
 from .forms import UsersCreationForm
 from django.contrib.auth import authenticate, login as auth_login, logout
 from abstract.models import *
-
+from django.contrib.auth.decorators import login_required
 
 def home(request):
     return render(request, 'account/home.html')
@@ -56,13 +56,15 @@ def login(request):
     return render(request, 'account/login.html')
 
 
+
+@login_required(login_url='login')
 def logout_view(request):
     logout(request)
     messages.success(request, 'You have successfully logged out.')
     return redirect('home')
 
 
-
+@login_required(login_url='login')
 def author_dashboard(request):
     # Get the current user's abstracts and their reviewed abstracts
     abstracts = request.user.abstract_set.all()
@@ -100,7 +102,7 @@ def author_dashboard(request):
     return render(request, 'account/author_dashboard.html', context)
 
 
-
+@login_required(login_url='login')
 def manager(request):
     abstracts = Abstract.objects.all()
     reviews = Reviews.objects.all()

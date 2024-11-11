@@ -9,8 +9,11 @@ import uuid
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib import messages
 from django.template.loader import render_to_string
-from django.utils.html import strip_tags  # Import strip_tags
+from django.utils.html import strip_tags
+from django.contrib.auth.decorators import login_required
 
+
+@login_required(login_url='login')
 def create_abstract(request):
     if request.method == 'POST':
         abstract_form = AbstractForm(request.POST, request.FILES)
@@ -94,6 +97,8 @@ def create_abstract(request):
 
 
 
+
+@login_required(login_url='login')
 def edit_abstract(request, id):
     abstract = get_object_or_404(Abstract, id=id)
 
@@ -163,6 +168,8 @@ def edit_abstract(request, id):
 
 
 
+
+@login_required(login_url='login')
 def delete_abstract(request, id):
     abstract = get_object_or_404(Abstract, id=id)
 
@@ -201,13 +208,15 @@ def delete_abstract(request, id):
     return render(request, 'abstract/confirm_delete.html', {'abstract': abstract})
 
 
-
+@login_required(login_url='login')
 def abstract_detail(request, id):
     abstract = get_object_or_404(Abstract, id=id)
     return render(request, 'abstract/abstract_detail.html', {'abstract': abstract})
 
 
 
+
+@login_required(login_url='login')
 def create_assignment(request):
     if request.method == 'POST':
         form = AssignmentForm(request.POST)
@@ -233,7 +242,7 @@ def create_assignment(request):
 #     return render(request, 'abstract/reviewer_form.html', {'form': form})
 
 
-# @login_required
+@login_required(login_url='login')
 def create_reviewer(request):
     if request.method == 'POST':
         form = ReviewerForm(request.POST)
@@ -249,6 +258,7 @@ def create_reviewer(request):
 
 
 # for the chair
+@login_required(login_url='login')
 def assign_reviewers(request, abstract_id):
     # Fetch the abstract
     abstract = get_object_or_404(Abstract, id=abstract_id)
@@ -315,6 +325,7 @@ def assign_reviewers(request, abstract_id):
 
 
 
+@login_required(login_url='login')
 def add_review(request, abstract_id):
     # Get the abstract based on the provided ID
     abstract = get_object_or_404(Abstract, id=abstract_id)
@@ -403,6 +414,8 @@ def add_review(request, abstract_id):
 
 
 
+
+@login_required(login_url='login')
 def edit_review(request, review_id):
     # Get the existing review
     review = get_object_or_404(Reviews, id=review_id)
@@ -429,6 +442,7 @@ def edit_review(request, review_id):
 
 
 
+@login_required(login_url='login')
 def manager_create_abstract(request):
     if request.method == 'POST':
         abstract_form = ManagerAbstractForm(request.POST, request.FILES)
@@ -493,6 +507,7 @@ def manager_create_abstract(request):
 
 
 
+@login_required(login_url='login')
 def manager_edit_abstract(request, id):
     abstract = get_object_or_404(Abstract, id=id)
 
@@ -563,6 +578,7 @@ def manager_edit_abstract(request, id):
 
 
 
+@login_required(login_url='login')
 def manager_add_review(request, abstract_id):
     # Get the abstract based on the provided ID
     abstract = get_object_or_404(Abstract, id=abstract_id)
@@ -647,6 +663,8 @@ def manager_add_review(request, abstract_id):
 
 
 
+
+@login_required(login_url='login')
 def manager_edit_review(request, review_id):
     # Get the existing review
     review = get_object_or_404(Reviews, id=review_id)

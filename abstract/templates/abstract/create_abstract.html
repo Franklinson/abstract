@@ -1,180 +1,115 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Create Abstract</title>
+    <link href="{% static 'create_abstract.css' %}" rel="stylesheet">
+    <link href="{% static 'bootstrap.min.css' %}" rel="stylesheet">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f9f9f9;
-            margin: 0;
-            padding: 20px;
-        }
-        h1 {
-            text-align: center;
-            color: #333;
-        }
-        form {
-            max-width: 600px;
-            margin: auto;
-            padding: 20px;
-            background: white;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-        }
-        .inline-form {
-            margin-bottom: 15px;
-            padding: 15px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            background-color: #f7f7f7;
-        }
-        label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: bold;
-        }
-        input[type="text"], input[type="email"] {
-            width: calc(100% - 22px);
-            padding: 10px;
-            margin-bottom: 10px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            font-size: 14px;
-        }
-        button {
-            padding: 10px 15px;
-            border: none;
-            border-radius: 4px;
-            background-color: #007bff;
-            color: white;
-            cursor: pointer;
-            font-size: 14px;
-        }
-        button:hover {
-            background-color: #0056b3;
-        }
-        #add-author, #add-presenter {
-            margin-top: 15px;
-            background-color: #28a745;
-        }
-        #add-author:hover, #add-presenter:hover {
-            background-color: #218838;
-        }
-        .remove-author, .remove-presenter {
-            background-color: #dc3545;
-        }
-        .remove-author:hover, .remove-presenter:hover {
-            background-color: #c82333;
-        }
-        .section-header {
-            margin-top: 20px;
-            margin-bottom: 10px;
-            font-size: 1.5em;
-            border-bottom: 2px solid #007bff;
-            padding-bottom: 5px;
-            color: #333;
-        }
-    </style>
 </head>
 <body>
-    <h1>Create Abstract</h1>
-    <form method="post" enctype="multipart/form-data">
-        {% csrf_token %}
-        {{ abstract_form.as_p }}
-        
-        <div class="section-header">Authors</div>
-        <div id="authors">
-            {{ author_formset.management_form }}
-            {% for form in author_formset %}
-                <div class="inline-form">
-                    {{ form.as_p }}
-                    <button type="button" class="remove-author">Remove</button>
-                </div>
-            {% endfor %}
-        </div>
-        <button type="button" id="add-author">Add Another Author</button>
-        
-        <div class="section-header">Presenters</div>
-        <div id="presenters">
-            {{ presenter_formset.management_form }}
-            {% for form in presenter_formset %}
-                <div class="inline-form">
-                    {{ form.as_p }}
-                    <button type="button" class="remove-presenter">Remove</button>
-                </div>
-            {% endfor %}
-        </div>
-        <button type="button" id="add-presenter">Add Another Presenter</button>
-        
-        <button type="submit">Submit</button>
-    </form>
+    <!-- Navbar inclusion -->
+    {% include 'abstract/navbar.html' %}
 
-    <script>
-        // Ensure authorFormIndex and presenterFormIndex are numbers
-        var authorFormIndex = typeof authorFormIndex === 'undefined' ? parseInt("{{ author_formset.total_form_count }}") || 0 : authorFormIndex;
-        var presenterFormIndex = typeof presenterFormIndex === 'undefined' ? parseInt("{{ presenter_formset.total_form_count }}") || 0 : presenterFormIndex;
+    <div class="container mt-5">
+        <h1>Create Abstract</h1>
+        <form method="post" enctype="multipart/form-data" class="mt-4">
+            {% csrf_token %}
+            {{ abstract_form.as_p }}
+            
+            <div class="section-header">Authors</div>
+            <div id="authors">
+                {{ author_formset.management_form }}
+                {% for form in author_formset %}
+                    <div class="inline-form">
+                        {{ form.as_p }}
+                        <button type="button" class="btn btn-danger mt-2 remove-author">Remove</button>
+                    </div>
+                {% endfor %}
+            </div>
+            <button type="button" id="add-author" class="btn btn-success mt-2">Add Another Author</button>
+            
+            <div class="section-header mt-4">Presenters</div>
+            <div id="presenters">
+                {{ presenter_formset.management_form }}
+                {% for form in presenter_formset %}
+                    <div class="inline-form">
+                        {{ form.as_p }}
+                        <button type="button" class="btn btn-danger mt-2 remove-presenter">Remove</button>
+                    </div>
+                {% endfor %}
+            </div>
+            <button type="button" id="add-presenter" class="btn btn-success mt-2">Add Another Presenter</button>
+            
+            <!-- Submit and Cancel buttons -->
+            <div class="mt-4">
+                <button type="submit" class="btn btn-primary">Submit</button>
+                <a href="{% url 'author_dashboard' %}" class="btn btn-secondary">Cancel</a>
+            </div>
+            
+        </form>
+    </div>
     
-        // Function to add new Author form
+
+    <!-- JavaScript for dynamic form fields -->
+    <script>
+        var authorFormIndex = parseInt("{{ author_formset.total_form_count|default:0 }}") || 0;
+        var presenterFormIndex = parseInt("{{ presenter_formset.total_form_count|default:0 }}") || 0;
+    
         $('#add-author').click(function() {
             const newForm = `
                 <div class="inline-form">
                     <label for="id_authorinformation_set-${authorFormIndex}-author_name">Author Name:</label>
-                    <input type="text" name="authorinformation_set-${authorFormIndex}-author_name" id="id_authorinformation_set-${authorFormIndex}-author_name">
+                    <input type="text" name="authorinformation_set-${authorFormIndex}-author_name" id="id_authorinformation_set-${authorFormIndex}-author_name" class="form-control">
                     
                     <label for="id_authorinformation_set-${authorFormIndex}-email">Email:</label>
-                    <input type="email" name="authorinformation_set-${authorFormIndex}-email" id="id_authorinformation_set-${authorFormIndex}-email">
+                    <input type="email" name="authorinformation_set-${authorFormIndex}-email" id="id_authorinformation_set-${authorFormIndex}-email" class="form-control">
                     
                     <label for="id_authorinformation_set-${authorFormIndex}-affiliation">Affiliation:</label>
-                    <input type="text" name="authorinformation_set-${authorFormIndex}-affiliation" id="id_authorinformation_set-${authorFormIndex}-affiliation">
+                    <input type="text" name="authorinformation_set-${authorFormIndex}-affiliation" id="id_authorinformation_set-${authorFormIndex}-affiliation" class="form-control">
                     
-                    <input type="hidden" name="authorinformation_set-${authorFormIndex}-id" id="id_authorinformation_set-${authorFormIndex}-id">
-                    <button type="button" class="remove-author">Remove</button>
+                    <button type="button" class="btn btn-danger mt-2 remove-author">Remove</button>
                 </div>`;
-                
             $('#authors').append(newForm);
             authorFormIndex++;
             updateManagementForm('authorinformation_set', authorFormIndex);
         });
-    
-        // Function to add new Presenter form
+
         $('#add-presenter').click(function() {
             const newForm = `
                 <div class="inline-form">
                     <label for="id_presenterinformation_set-${presenterFormIndex}-name">Presenter Name:</label>
-                    <input type="text" name="presenterinformation_set-${presenterFormIndex}-name" id="id_presenterinformation_set-${presenterFormIndex}-name">
+                    <input type="text" name="presenterinformation_set-${presenterFormIndex}-name" id="id_presenterinformation_set-${presenterFormIndex}-name" class="form-control">
                     
                     <label for="id_presenterinformation_set-${presenterFormIndex}-email">Email:</label>
-                    <input type="email" name="presenterinformation_set-${presenterFormIndex}-email" id="id_presenterinformation_set-${presenterFormIndex}-email">
+                    <input type="email" name="presenterinformation_set-${presenterFormIndex}-email" id="id_presenterinformation_set-${presenterFormIndex}-email" class="form-control">
                     
-                    <input type="hidden" name="presenterinformation_set-${presenterFormIndex}-id" id="id_presenterinformation_set-${presenterFormIndex}-id">
-                    <button type="button" class="remove-presenter">Remove</button>
+                    <button type="button" class="btn btn-danger mt-2 remove-presenter">Remove</button>
                 </div>`;
-                
             $('#presenters').append(newForm);
             presenterFormIndex++;
             updateManagementForm('presenterinformation_set', presenterFormIndex);
         });
-    
-        // Function to update management form count
+
         function updateManagementForm(prefix, count) {
             $(`#id_${prefix}-TOTAL_FORMS`).val(count);
         }
-    
-        // Function to remove a form
+
         $(document).on('click', '.remove-author', function() {
             $(this).closest('.inline-form').remove();
             authorFormIndex--;
             updateManagementForm('authorinformation_set', authorFormIndex);
         });
-    
+
         $(document).on('click', '.remove-presenter', function() {
             $(this).closest('.inline-form').remove();
             presenterFormIndex--;
             updateManagementForm('presenterinformation_set', presenterFormIndex);
         });
     </script>
+
+    <script src="{% static 'bootstrap.bundle.min.js' %}"></script>
 </body>
 </html>
