@@ -17,6 +17,7 @@
         <h1>Create Abstract</h1>
         <form method="post" enctype="multipart/form-data" class="mt-4">
             {% csrf_token %}
+            {{ abstract_form.media }}
             {{ abstract_form.as_p }}
             
             <div class="section-header">Authors</div>

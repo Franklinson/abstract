@@ -17,6 +17,7 @@
     <h1>Update Abstract</h1>
     <form method="post" enctype="multipart/form-data">
         {% csrf_token %}
+        {{ abstract_form.media }}
         {{ abstract_form.as_p }}
         
         <!-- Authors Section -->

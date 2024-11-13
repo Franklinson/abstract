@@ -2,6 +2,7 @@ from django.db import models
 from django.conf import settings
 from django.core.validators import MinValueValidator, MaxValueValidator
 from shortuuid.django_fields import ShortUUIDField
+from django_ckeditor_5.fields import CKEditor5Field
 
 # event information for which the abstract will be submitted to
 # class Event(models.Model):
@@ -69,7 +70,7 @@ Choices = (
 class Abstract(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, null=True)
     abstract_title = models.CharField(max_length=200)
-    abstract = models.TextField(max_length=306)
+    abstract = CKEditor5Field('Abstract', config_name='extends')
     keywords = models.CharField(max_length=100)
     attachment = models.FileField(upload_to='abstract_files')
     # event = models.ForeignKey(Event, on_delete=models.CASCADE)
@@ -119,7 +120,7 @@ class Reviews(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, null=True)
     abstract = models.ForeignKey(Abstract, on_delete=models.CASCADE, related_name='reviews')
     reviewer = models.ForeignKey(Reviewer, on_delete=models.CASCADE)
-    comment = models.TextField()
+    comment = CKEditor5Field('Comment', config_name='extends')
     attachment = models.FileField(upload_to='review_attachment', blank=True, null=True)  # Make attachment optional
     status = models.CharField(max_length=30, choices=STATUS_CHOICES)
     presentation = models.ForeignKey(PresentationType, on_delete=models.CASCADE, null=True, blank=True)
