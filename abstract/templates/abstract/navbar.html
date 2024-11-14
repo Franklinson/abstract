@@ -9,7 +9,7 @@
     <ul class="nav col-12 col-md-auto mb-2 justify-content-center mb-md-0">
       <li><a href="{% url 'home' %}" class="nav-link px-2 link-dark">Home</a></li>
       <li><a href="{% url 'author_dashboard' %}" class="nav-link px-2 link-dark">Dashboard</a></li>
-      <li><a href="#" class="nav-link px-2 link-dark">Register</a></li>
+      <li><a href="{% url 'register' %}" class="nav-link px-2 link-dark">Register</a></li>
       <li><a href="#" class="nav-link px-2 link-dark">FAQs</a></li>
       <li><a href="#" class="nav-link px-2 link-dark">About</a></li>
     </ul>
@@ -17,7 +17,7 @@
     <div class="col-md-3 text-end">
       {% if not user.is_authenticated %}
         <a href="{% url 'login' %}" class="btn btn-outline-primary me-2">Login</a>
-        <a href="{% url 'register' %}" class="btn btn-primary">Sign-up</a>
+        <a href="{% url 'signup' %}" class="btn btn-primary">Sign-up</a>
       {% else %}
         <a href="{% url 'logout' %}" class="btn btn-outline-secondary me-2">Logout</a>
       {% endif %}

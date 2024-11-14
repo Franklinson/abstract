@@ -1,0 +1,50 @@
+{% extends "abstract/main.html" %}
+
+{% block content %}
+<div class="container mt-5">
+    <h2 class="text-center">Register</h2>
+    <form id="registerForm" method="POST" enctype="multipart/form-data" class="needs-validation" novalidate>
+        {% csrf_token %}
+        {{ form.as_p }}
+        
+        <input type="hidden" id="transactionRef" name="transaction_ref" value="{{ form.transaction_ref.value }}">
+        
+        <div class="text-center mt-4">
+            <button type="button" onclick="payWithPaystack()" class="btn btn-primary">Proceed with Payment</button>
+        </div>
+    </form>
+</div>
+
+<script src="https://js.paystack.co/v1/inline.js"></script>
+<script type="text/javascript">
+    function generateTransactionReference() {
+        return 'TX_' + Math.random().toString(36).substring(2, 15) + '_' + new Date().getTime();
+    }
+
+    function payWithPaystack() {
+        var email = document.getElementById('id_email').value;
+        var amount = 5000 * 100;  // Amount in kobo (e.g., 5000 NGN)
+        
+        // Generate a new unique reference and set it in the hidden field
+        var transactionRef = generateTransactionReference();
+        document.getElementById('transactionRef').value = transactionRef;
+
+        var handler = PaystackPop.setup({
+            key: 'pk_test_2b022f7fc3915a046204160dd1ea559b76bb0d2d',
+            email: email,
+            amount: amount,
+            currency: 'GHS',
+            ref: transactionRef,
+            callback: function(response) {
+                document.getElementById('transactionRef').value = response.reference;
+                document.getElementById('registerForm').submit();
+            },
+            onClose: function() {
+                alert('Payment was not completed.');
+            }
+        });
+        handler.openIframe();
+    }
+</script>
+
+{% endblock %}

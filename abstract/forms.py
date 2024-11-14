@@ -141,3 +141,7 @@ class ManagerReviewForm(forms.ModelForm):
         ]
         for field in scoring_fields:
             self.fields[field].widget = forms.NumberInput(attrs={'class': 'form-control', 'min': 1, 'max': 10})
+
+
+# 'comment': CKEditor5Widget(attrs={"class": "django_ckeditor_5"}, config_name="extends"),
+# from django_ckeditor_5.widgets import CKEditor5Widget
