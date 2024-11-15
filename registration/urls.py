@@ -3,4 +3,5 @@ from . import views
 
 urlpatterns = [
     path('', views.register, name='register'),
+    path('paystack/callback/', views.paystack_callback, name='paystack_callback'),
 ]

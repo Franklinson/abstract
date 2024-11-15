@@ -42,12 +42,14 @@ class Register(models.Model):
     phone = models.CharField(max_length=15)
     gender = models.CharField(max_length=10, choices=(('Male', 'Male'), ('Female', 'Female')))
     category = models.CharField(max_length=200, choices=Category)
-    gand_number = models.CharField(max_length=100, null=True, blank=True)
+    gand_number = models.CharField(max_length=100, unique=True, null=True, blank=True)
     prof_of_status = models.FileField(null=True, blank=True)
     profession = models.CharField(max_length=100, choices=Profession)
     organization = models.CharField(max_length=50)
     about_us = models.CharField(max_length=100, choices=About_us)
     complaince = models.BooleanField(default=False)
+    amount_paid = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    transaction_ref = models.CharField(max_length=500, null=True)
     date_created = models.DateTimeField(auto_now_add=True)
 
 

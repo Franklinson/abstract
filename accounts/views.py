@@ -6,6 +6,7 @@ from .forms import UsersCreationForm
 from django.contrib.auth import authenticate, login as auth_login, logout
 from abstract.models import *
 from django.contrib.auth.decorators import login_required
+from registration.models import Register
 
 def home(request):
     return render(request, 'account/home.html')
@@ -112,6 +113,7 @@ def manager(request):
     total_rejected = abstracts.filter(status='Rejected').count()
     total_submitted = abstracts.filter(status='Submitted').count()
     total_reviewed = abstracts.filter(status='Reviewed').count()
+    register = Register.objects.count()
 
     reviewed = abstracts.filter(status='Reviewed')
     accepted = abstracts.filter(status='Accepted')
@@ -127,5 +129,6 @@ def manager(request):
         'reviewed': reviewed,
         'accepted': accepted,
         'reviews': reviews,
+        'register': register,
     }
     return render(request, 'account/overseer_dashboard.html', context)
