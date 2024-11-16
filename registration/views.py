@@ -6,14 +6,108 @@ from django.http import HttpResponse
 from .models import Register
 from django.contrib import messages
 from django.urls import reverse
-# from .forms import GAND_DATA
+import qrcode
+from io import BytesIO
+from django.core.mail import EmailMessage, EmailMultiAlternatives
+from reportlab.pdfgen import canvas
+from reportlab.lib.utils import ImageReader
+from django.template.loader import render_to_string
+from django.utils.html import strip_tags
+import datetime
+from .models import EmailLog
+from django.contrib.auth.decorators import login_required
 
 
 
-# def fetch_gand_name(request):
-#     gand_number = request.GET.get('gand_number')
-#     gand_name = GAND_DATA.get(gand_number, "")
-#     return JsonResponse({'name': gand_name})
+# @login_required(login_url='login')
+def send_registration_email(registration):
+    # Generate QR code with registrant information
+    qr_info = f"""
+    Name: {registration.name}
+    Email: {registration.email}
+    Phone: {registration.phone}
+    Category: {registration.category}
+    Transaction Reference: {registration.transaction_ref}
+    """
+    qr_code = generate_qr_code(qr_info)
+
+    # Create PDF with QR code
+    pdf_file = generate_pdf_ticket(registration, qr_code)
+
+    # Render the external HTML file
+    context = {
+        'name': registration.name,
+        'email': registration.email,
+        'category': registration.category,
+        'transaction_ref': registration.transaction_ref,
+        'site_url': 'https://yourorganization.com',  # Replace with your actual site URL
+        'year': datetime.datetime.now().year,
+    }
+    html_content = render_to_string('email/registration_email.html', context)
+    text_content = strip_tags(html_content)  # Fallback plain text version
+
+    # Create and send the email
+    subject = "Registration Successful"
+    email = EmailMultiAlternatives(
+        subject,
+        text_content,  # Plain text content
+        settings.DEFAULT_FROM_EMAIL,
+        [registration.email],
+    )
+
+    EmailLog.objects.create(
+                recipient=[registration.email],
+                subject=subject,
+                plain_message=text_content,
+                html_message=html_content,
+            )
+    
+    email.attach_alternative(html_content, "text/html")  # Attach HTML content
+    email.attach('ticket.pdf', pdf_file.getvalue(), 'application/pdf')  # Attach the PDF ticket
+    email.send()
+
+
+def generate_qr_code(data):
+    qr = qrcode.QRCode(
+        version=1,
+        error_correction=qrcode.constants.ERROR_CORRECT_L,
+        box_size=10,
+        border=4,
+    )
+    qr.add_data(data)
+    qr.make(fit=True)
+
+    img = qr.make_image(fill_color="black", back_color="white")
+    buffer = BytesIO()
+    img.save(buffer, format="PNG")
+    buffer.seek(0)
+    return buffer
+
+
+def generate_pdf_ticket(registration, qr_code):
+    buffer = BytesIO()
+    c = canvas.Canvas(buffer)
+    c.setFont("Helvetica", 12)
+
+    # Add text
+    c.drawString(100, 800, "Event Registration Ticket")
+    c.drawString(100, 780, f"Name: {registration.name}")
+    c.drawString(100, 760, f"Email: {registration.email}")
+    c.drawString(100, 740, f"Category: {registration.category}")
+    c.drawString(100, 720, f"Transaction Reference: {registration.transaction_ref}")
+
+    # Convert QR code BytesIO to ImageReader
+    qr_code.seek(0)  # Reset buffer position
+    qr_image = ImageReader(qr_code)
+
+    # Add QR code to PDF
+    c.drawImage(qr_image, 100, 600, width=100, height=100)
+
+    # Finalize PDF
+    c.showPage()
+    c.save()
+    buffer.seek(0)
+    return buffer
 
 
 def register(request):
@@ -72,17 +166,10 @@ def initiate_paystack_payment(transaction_ref, email, amount):
 
 
 def paystack_callback(request):
-    # Retrieve transaction reference from the callback URL
     transaction_ref = request.GET.get('trxref') or request.GET.get('reference')
     session_transaction_ref = request.session.get('transaction_ref')
     form_data = request.session.get('form_data')
 
-    # Debugging outputs to confirm data at each step
-    print("Callback URL hit with transaction_ref:", transaction_ref)
-    print("Session transaction_ref:", session_transaction_ref)
-    print("Form data in session:", form_data)
-
-    # Ensure both references match and verify the payment
     if transaction_ref and session_transaction_ref == transaction_ref:
         if verify_payment(transaction_ref):
             if form_data:
@@ -91,14 +178,9 @@ def paystack_callback(request):
                     f'https://api.paystack.co/transaction/verify/{transaction_ref}',
                     headers={'Authorization': f'Bearer {settings.PAYSTACK_SECRET_KEY}'}
                 ).json()
+                amount_paid = verification_data['data'].get('amount', 0) / 100  # Convert to currency
 
-                amount_paid = verification_data['data'].get('amount', 0) / 100  # Convert from kobo to currency
-
-                # Delete session data after successful retrieval
-                del request.session['form_data']
-                del request.session['transaction_ref']
-                
-                # Save the form data to the database
+                # Save the registration to the database
                 registration = Register(
                     title=form_data.get('title'),
                     name=form_data.get('name'),
@@ -116,23 +198,21 @@ def paystack_callback(request):
                     transaction_ref=transaction_ref,
                     amount_paid=amount_paid
                 )
-                
-                # Attempt to save the registration
-                try:
-                    registration.save()
-                    return redirect('author_dashboard')
-                except Exception as e:
-                    print("Error saving registration:", e)
-                    messages.error(request, "Error saving registration.")
-                    return HttpResponse("Error saving registration.", status=500)
+                registration.save()
+
+                # Generate and send the email with the QR code and PDF ticket
+                send_registration_email(registration)
+
+                # Clear session data
+                del request.session['form_data']
+                del request.session['transaction_ref']
+
+                return redirect('author_dashboard')
             else:
-                print("Form data not found in session.")
                 return HttpResponse("Form data not found in session.", status=404)
         else:
-            print("Payment verification failed.")
             return HttpResponse("Payment verification failed.", status=400)
     else:
-        print("Transaction reference mismatch or missing.")
         return HttpResponse("Bad Request: Transaction reference mismatch.", status=400)
 
 

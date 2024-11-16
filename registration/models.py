@@ -1,5 +1,5 @@
 from django.db import models
-
+from shortuuid.django_fields import ShortUUIDField
 
 class Register(models.Model):
     
@@ -34,7 +34,7 @@ class Register(models.Model):
         ('Website', 'Website'),
         ('others', 'others'),
     )
-
+    registration_number = ShortUUIDField(unique=True, length=6, max_length=30, prefix="COREG-", alphabet="1234567890")
     title = models.CharField(max_length=20, choices=Title)
     name = models.CharField(max_length=500)
     email = models.EmailField()
@@ -55,3 +55,15 @@ class Register(models.Model):
 
     def __str__(self):
         return self.name
+    
+
+
+class EmailLog(models.Model):
+    recipient = models.EmailField()
+    subject = models.CharField(max_length=255)
+    plain_message = models.TextField()
+    html_message = models.TextField(null=True, blank=True)
+    sent_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Email to {self.recipient} - {self.subject}"

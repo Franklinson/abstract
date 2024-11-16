@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f9f9f9;
+            color: #333;
+            padding: 20px;
+        }
+        .email-container {
+            max-width: 600px;
+            margin: auto;
+            background: #fff;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+        .email-header {
+            text-align: center;
+            background: #4CAF50;
+            color: #fff;
+            padding: 10px 0;
+            border-radius: 8px 8px 0 0;
+        }
+        .email-body {
+            padding: 20px;
+        }
+        .email-footer {
+            text-align: center;
+            font-size: 12px;
+            color: #999;
+            margin-top: 20px;
+        }
+        .cta-button {
+            display: inline-block;
+            background: #4CAF50;
+            color: #fff;
+            padding: 10px 20px;
+            text-decoration: none;
+            border-radius: 5px;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <div class="email-header">
+            <h1>Registration Successful</h1>
+        </div>
+        <div class="email-body">
+            <p>Dear {{ name }},</p>
+            <p>Thank you for registering for our event!</p>
+            <p>Your details:</p>
+            <ul>
+                <li><strong>Name:</strong> {{ name }}</li>
+                <li><strong>Email:</strong> {{ email }}</li>
+                <li><strong>Category:</strong> {{ category }}</li>
+                <li><strong>Transaction Reference:</strong> {{ transaction_ref }}</li>
+            </ul>
+            <p>Please find your ticket attached to this email.</p>
+            <a class="cta-button" href="{{ site_url }}" target="_blank">Visit Our Website</a>
+        </div>
+        <div class="email-footer">
+            <p>&copy; {{ year }} Your Organization. All rights reserved.</p>
+        </div>
+    </div>
+</body>
+</html>
