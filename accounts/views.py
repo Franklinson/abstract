@@ -7,6 +7,9 @@ from django.contrib.auth import authenticate, login as auth_login, logout
 from abstract.models import *
 from django.contrib.auth.decorators import login_required
 from registration.models import Register
+from .forms import UserUpdateForm
+
+
 
 def home(request):
     return render(request, 'account/home.html')
@@ -50,7 +53,7 @@ def login(request):
         if user is not None:
             auth_login(request, user)
             messages.success(request, f'Welcome back,!')
-            return redirect('author_dashboard')
+            return redirect('profile_update')
         else:
             messages.error(request, 'Invalid email or password.')
     
@@ -63,6 +66,23 @@ def logout_view(request):
     logout(request)
     messages.success(request, 'You have successfully logged out.')
     return redirect('home')
+
+
+
+@login_required
+def update_profile(request):
+    user = request.user
+    if request.method == 'POST':
+        form = UserUpdateForm(request.POST, instance=user)
+        if form.is_valid():
+            form.save()
+            return redirect('profile_update')
+    else:
+        form = UserUpdateForm(instance=user)
+
+    return render(request, 'account/profile_update.html', {'form': form})
+
+
 
 
 @login_required(login_url='login')

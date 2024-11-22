@@ -1,6 +1,11 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
 from .models import Users
+from django.contrib.auth import get_user_model
+
+
+Users = get_user_model()
+
 
 class UsersCreationForm(UserCreationForm):
     email = forms.EmailField(required=True, label="Email")
@@ -20,3 +25,13 @@ class UsersCreationForm(UserCreationForm):
                 raise forms.ValidationError("Emails do not match!")
         
         return cleaned_data
+
+
+
+class UserUpdateForm(forms.ModelForm):
+    class Meta:
+        model = Users
+        fields = ['first_name', 'last_name', 'email']
+        widgets = {
+            'email': forms.TextInput(attrs={'readonly': 'readonly'}),
+        }

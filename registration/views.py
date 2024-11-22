@@ -55,16 +55,18 @@ def send_registration_email(registration):
         [registration.email],
     )
 
+    # Log only the plain text message
     EmailLog.objects.create(
-                recipient=[registration.email],
-                subject=subject,
-                plain_message=text_content,
-                html_message=html_content,
-            )
+        recipient=[registration.email],
+        subject=subject,
+        plain_message=text_content,
+        html_message=html_content,
+    )
     
     email.attach_alternative(html_content, "text/html")  # Attach HTML content
     email.attach('ticket.pdf', pdf_file.getvalue(), 'application/pdf')  # Attach the PDF ticket
     email.send()
+
 
 
 def generate_qr_code(data):
@@ -225,7 +227,7 @@ def verify_payment(transaction_ref):
     
     if response.status_code == 200:
         data = response.json()
-        print("Paystack verification data:", data)  # Debugging output
+        # print("Paystack verification data:", data)  # Debugging output
         # Check if both the root-level 'status' is True and 'data.status' is 'success'
         if data.get('status') is True and data['data'].get('status') == 'success':
             return True
