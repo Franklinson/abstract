@@ -2,7 +2,7 @@ import requests
 from django.conf import settings
 from django.shortcuts import render, redirect
 from .forms import RegisterForm
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from .models import Register
 from django.contrib import messages
 from django.urls import reverse
@@ -15,21 +15,24 @@ from django.template.loader import render_to_string
 from django.utils.html import strip_tags
 import datetime
 from .models import EmailLog
-from django.contrib.auth.decorators import login_required
+# from django.contrib.auth.decorators import login_required
+# from django.views.decorators.csrf import csrf_exempt
+# import json
+# from django.utils.timezone import now
+from django.utils.http import urlencode
 
 
 
-# @login_required(login_url='login')
 def send_registration_email(registration):
     # Generate QR code with registrant information
-    qr_info = f"""
-    Name: {registration.name}
-    Email: {registration.email}
-    Phone: {registration.phone}
-    Category: {registration.category}
-    Transaction Reference: {registration.transaction_ref}
-    """
-    qr_code = generate_qr_code(qr_info)
+    # qr_info = f"""
+    # Name: {registration.name}
+    # Email: {registration.email}
+    # Phone: {registration.phone}
+    # Category: {registration.category}
+    # Transaction Reference: {registration.transaction_ref}
+    # """
+    qr_code = generate_qr_code(registration)
 
     # Create PDF with QR code
     pdf_file = generate_pdf_ticket(registration, qr_code)
@@ -59,7 +62,7 @@ def send_registration_email(registration):
     EmailLog.objects.create(
         recipient=[registration.email],
         subject=subject,
-        plain_message=text_content,
+        plain_message=strip_tags(html_content),
         html_message=html_content,
     )
     
@@ -69,14 +72,19 @@ def send_registration_email(registration):
 
 
 
-def generate_qr_code(data):
+def generate_qr_code(registration):
+    qr_data = {
+        "registration_number": registration.registration_number,
+    }
+    api_url = f"https://settings.SITE_URL/api/validate_registration/?{urlencode(qr_data)}"
+
     qr = qrcode.QRCode(
         version=1,
         error_correction=qrcode.constants.ERROR_CORRECT_L,
         box_size=10,
         border=4,
     )
-    qr.add_data(data)
+    qr.add_data(api_url)
     qr.make(fit=True)
 
     img = qr.make_image(fill_color="black", back_color="white")
@@ -154,11 +162,14 @@ def initiate_paystack_payment(transaction_ref, email, amount):
         'Authorization': f'Bearer {settings.PAYSTACK_SECRET_KEY}',
         'Content-Type': 'application/json',
     }
+    callback_url = f"{settings.SITE_URL}{reverse('paystack_callback')}"
+    print(f"Callback URL: {callback_url}")
     payload = {
         'reference': transaction_ref,
         'email': email,
         'amount': amount,
-        'callback_url': f"{settings.SITE_URL}{reverse('paystack_callback')}",  # Set dynamic callback URL
+        'callback_url': f"{settings.SITE_URL}{reverse('paystack_callback')}",
+          # Set dynamic callback URL
     }
     response = requests.post('https://api.paystack.co/transaction/initialize', json=payload, headers=headers)
     if response.status_code == 200:
@@ -171,8 +182,10 @@ def paystack_callback(request):
     transaction_ref = request.GET.get('trxref') or request.GET.get('reference')
     session_transaction_ref = request.session.get('transaction_ref')
     form_data = request.session.get('form_data')
+    print(f"Callback transaction_ref: {transaction_ref}")
+    print(f"Session transaction_ref: {session_transaction_ref}")
 
-    if transaction_ref and session_transaction_ref == transaction_ref:
+    if transaction_ref:
         if verify_payment(transaction_ref):
             if form_data:
                 # Get the amount paid from the verification response

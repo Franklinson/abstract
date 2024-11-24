@@ -1,23 +1,107 @@
-<form method="post" enctype="multipart/form-data">
-    {% csrf_token %}
-    {{ form.as_p }}
-    
-    <div id="price-display">Price: </div>
-    <button type="submit">Proceed to Payment</button>
-</form>
+{% extends 'abstract/main.html' %}
+{% load form_tags %}
+
+{% block content %}
+<div class="container my-5">
+    <form method="post" enctype="multipart/form-data" class="p-4 border rounded shadow-sm bg-light">
+        {% csrf_token %}
+        
+        <h2 class="text-center mb-4">Register for the Event</h2>
+
+        <!-- Render Form Fields Manually with Classes -->
+        <div class="mb-3">
+            <label for="{{ form.title.id_for_label }}" class="form-label">Title</label>
+            {{ form.title|add_class:"form-select" }}
+        </div>
+        
+        <div class="mb-3">
+            <label for="{{ form.name.id_for_label }}" class="form-label">Full Name</label>
+            {{ form.name|add_class:"form-control" }}
+        </div>
+
+        <div class="mb-3">
+            <label for="{{ form.email.id_for_label }}" class="form-label">Email Address</label>
+            {{ form.email|add_class:"form-control" }}
+        </div>
+
+        <div class="mb-3">
+            <label for="{{ form.phone.id_for_label }}" class="form-label">Phone Number</label>
+            {{ form.phone|add_class:"form-control" }}
+        </div>
+
+        <div class="mb-3">
+            <label for="{{ form.address.id_for_label }}" class="form-label">Address</label>
+            {{ form.address|add_class:"form-control" }}
+        </div>
+
+        <div class="mb-3">
+            <label for="{{ form.gender.id_for_label }}" class="form-label">Gender</label>
+            {{ form.gender|add_class:"form-select" }}
+        </div>
+
+        <div class="mb-3">
+            <label for="{{ form.category.id_for_label }}" class="form-label">Category</label>
+            {{ form.category|add_class:"form-select" }}
+        </div>
+
+        <div class="mb-3">
+            <label for="{{ form.profession.id_for_label }}" class="form-label">Profession</label>
+            {{ form.profession|add_class:"form-select" }}
+        </div>
+
+        <div class="mb-3">
+            <label for="{{ form.organization.id_for_label }}" class="form-label">Organization</label>
+            {{ form.organization|add_class:"form-control" }}
+        </div>
+
+        <div class="mb-3">
+            <label for="{{ form.gand_number.id_for_label }}" class="form-label">GAND Number</label>
+            {{ form.gand_number|add_class:"form-control" }}
+        </div>
+
+        <div class="mb-3">
+            <label for="{{ form.about_us.id_for_label }}" class="form-label">How Did You Hear About Us?</label>
+            {{ form.about_us|add_class:"form-select" }}
+        </div>
+
+        <div class="mb-3 form-check">
+            {{ form.complaince|add_class:"form-check-input" }}
+            <label class="form-check-label" for="id_complaince">I comply with the terms and conditions</label>
+        </div>
+
+        <div class="mb-3">
+            <label for="{{ form.prof_of_status.id_for_label }}" class="form-label">Proof of Status</label>
+            {{ form.prof_of_status|add_class:"form-control" }}
+        </div>
+
+        <!-- Price Display -->
+        <div id="price-display" class="text-success font-weight-bold mb-3">Price: </div>
+        
+        <!-- Submit Button -->
+        <button type="submit" class="btn btn-primary btn-block">Proceed to Payment</button>
+    </form>
+</div>
+
+<!-- Pass category_prices as JSON object to JavaScript -->
+{{ category_prices|json_script:"category_prices" }}
 
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         const categorySelect = document.getElementById("id_category");
         const priceDisplay = document.getElementById("price-display");
-        const categoryPrices = {{ category_prices|safe }};
         
+        // Retrieve category_prices from the template context
+        const categoryPrices = JSON.parse(document.getElementById('category_prices').textContent);
+
+        // Update price display based on the selected category
         function updatePriceDisplay() {
             const selectedCategory = categorySelect.value;
             priceDisplay.textContent = `Price: GHS${categoryPrices[selectedCategory] || 0}`;
         }
 
         categorySelect.addEventListener("change", updatePriceDisplay);
-        updatePriceDisplay();  // Initialize on page load
+        updatePriceDisplay();  // Initialize price display when page loads
     });
 </script>
+
+{% endblock %}
