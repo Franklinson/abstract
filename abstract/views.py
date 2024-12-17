@@ -11,6 +11,7 @@ from django.contrib import messages
 from django.template.loader import render_to_string
 from django.utils.html import strip_tags
 from django.contrib.auth.decorators import login_required
+from .tasks import schedule_reminders, cancel_reminders
 
 
 @login_required(login_url='login')
@@ -284,7 +285,12 @@ def assign_reviewers(request, abstract_id):
 
         # Assign each selected reviewer to the abstract
         for reviewer in reviewers_to_assign:
-            Assignment.objects.get_or_create(abstract=abstract, reviewer=reviewer)
+            assignment, created = Assignment.objects.get_or_create(abstract=abstract, reviewer=reviewer)
+
+            if created:
+                # Schedule reminders for the new assignment
+                schedule_reminders(assignment)
+                print("Schedule in place")
 
             # Prepare and send an email to the reviewer
             reviewer_subject = 'New Abstract Assigned for Review'
@@ -346,6 +352,13 @@ def add_review(request, abstract_id):
             abstract.status = 'Reviewed'
             abstract.save()
             review.save()  # Save the review instance
+
+            # Cancel scheduled reminders for this assignment
+            assignment = Assignment.objects.get(abstract=abstract, reviewer=request.user.reviewer)
+            cancel_reminders(assignment)
+            assignment.is_completed = True
+            assignment.save()
+            print('Reminder cancelled')
 
             # 1. Send confirmation email to the abstract's author
             author_subject = 'Review Added to Your Abstract'

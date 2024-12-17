@@ -15,23 +15,14 @@ from django.template.loader import render_to_string
 from django.utils.html import strip_tags
 import datetime
 from .models import EmailLog
-# from django.contrib.auth.decorators import login_required
-# from django.views.decorators.csrf import csrf_exempt
-# import json
-# from django.utils.timezone import now
+from reportlab.lib.pagesizes import letter
+from reportlab.platypus import Table, TableStyle
+from reportlab.lib import colors
 from django.utils.http import urlencode
 
 
 
 def send_registration_email(registration):
-    # Generate QR code with registrant information
-    # qr_info = f"""
-    # Name: {registration.name}
-    # Email: {registration.email}
-    # Phone: {registration.phone}
-    # Category: {registration.category}
-    # Transaction Reference: {registration.transaction_ref}
-    # """
     qr_code = generate_qr_code(registration)
 
     # Create PDF with QR code
@@ -96,22 +87,79 @@ def generate_qr_code(registration):
 
 def generate_pdf_ticket(registration, qr_code):
     buffer = BytesIO()
-    c = canvas.Canvas(buffer)
-    c.setFont("Helvetica", 12)
+    c = canvas.Canvas(buffer, pagesize=letter)
+    width, height = letter  # Dimensions for an 8.5x11 inch page
 
-    # Add text
-    c.drawString(100, 800, "Event Registration Ticket")
-    c.drawString(100, 780, f"Name: {registration.name}")
-    c.drawString(100, 760, f"Email: {registration.email}")
-    c.drawString(100, 740, f"Category: {registration.category}")
-    c.drawString(100, 720, f"Transaction Reference: {registration.transaction_ref}")
+    # Margins and line settings
+    margin_left = 50
+    line_height = 20
 
-    # Convert QR code BytesIO to ImageReader
+    # Add Ticket Details (Top)
+    c.setFont("Helvetica-Bold", 12)
+    c.drawString(margin_left, height - 50, f"Ticket ID: {registration.registration_number}")
+    c.setFont("Helvetica", 10)
+    c.drawString(margin_left, height - 70, f"Order Date: {registration.date_created.strftime('%B %d, %Y')}")
+    c.drawString(margin_left, height - 90, f"Order Number: {registration.registration_number.split('-')[-1]}")
+    c.drawString(margin_left, height - 110, f"Payment Method: Paystack")
+
+    # Billing Address Section
+    c.setFont("Helvetica-Bold", 12)
+    # c.drawString(margin_left, height - 150, "Billing Address:")
+    c.setFont("Helvetica", 10)
+    billing_address = [
+        registration.name,
+        registration.address,
+        "City: ReplaceCity",  # Replace with actual city if available
+        "Country: ReplaceCountry",  # Replace with actual country if available
+    ]
+    y_position = height - 170
+    for line in billing_address:
+        c.drawString(margin_left, y_position, line)
+        y_position -= line_height
+
+    # QR Code Section (Left)
     qr_code.seek(0)  # Reset buffer position
     qr_image = ImageReader(qr_code)
+    c.drawImage(qr_image, width - 150, height - 200, width=150, height=150)  # Adjusted for positioning
 
-    # Add QR code to PDF
-    c.drawImage(qr_image, 100, 600, width=100, height=100)
+    # Ticket Table Headers
+    table_data = [
+        ["Ticket", "Qty", "Price"],  # Header
+        [
+            f"{registration.category} Participants\nName: {registration.name}\nDate: {registration.date_created.strftime('%B %d, %Y')}\nVenue: Conference Center, City XYZ",
+            "1",
+            f"{registration.amount_paid:.2f}" if registration.amount_paid else "0.00",
+        ],
+    ]
+
+    # Add Ticket Table
+    table = Table(table_data, colWidths=[300, 50, 100])
+    table.setStyle(TableStyle([
+        ("BACKGROUND", (0, 0), (-1, 0), colors.lightgrey),
+        ("TEXTCOLOR", (0, 0), (-1, 0), colors.black),
+        ("ALIGN", (1, 1), (-1, -1), "CENTER"),
+        ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+        ("BOTTOMPADDING", (0, 0), (-1, 0), 12),
+        ("GRID", (0, 0), (-1, -1), 0.5, colors.grey),
+    ]))
+    table.wrapOn(c, width, height)
+    table.drawOn(c, margin_left, y_position - 100)
+
+    # Add Subtotal and Total
+    y_position -= 150
+    subtotal = f"{registration.amount_paid:.2f}" if registration.amount_paid else "0.00"
+    c.setFont("Helvetica-Bold", 12)
+    c.drawString(margin_left + 300, y_position, "Subtotal:")
+    c.drawString(margin_left + 400, y_position, subtotal)
+
+    # Draw a horizontal line between Subtotal and Total
+    y_position -= 10
+    c.line(margin_left + 300, y_position, margin_left + 500, y_position)
+
+    # Total
+    y_position -= 20
+    c.drawString(margin_left + 300, y_position, "Total:")
+    c.drawString(margin_left + 400, y_position, subtotal)
 
     # Finalize PDF
     c.showPage()
@@ -240,7 +288,7 @@ def verify_payment(transaction_ref):
     
     if response.status_code == 200:
         data = response.json()
-        # print("Paystack verification data:", data)  # Debugging output
+        print("Paystack verification data:", data)  # Debugging output
         # Check if both the root-level 'status' is True and 'data.status' is 'success'
         if data.get('status') is True and data['data'].get('status') == 'success':
             return True

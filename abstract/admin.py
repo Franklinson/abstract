@@ -6,6 +6,8 @@ from .models import *
 from accounts.models import Users
 from django.http import HttpResponse
 from docx import Document
+from django.core.mail import send_mail
+from django.conf import settings
 
 
 @admin.action(description="Export selected abstracts to DOCX")
@@ -221,6 +223,20 @@ class AbstractAdmin(ImportExportModelAdmin):
     ordering = ('-date_created',)
     actions = [export_abstracts_to_docx]
 
+    def save_model(self, request, obj, form, change):
+        # Call the parent class's save_model to save the object
+        super().save_model(request, obj, form, change)
+
+        # Send email after saving
+        if obj.email:
+            send_mail(
+                subject=f"Abstract Submission Confirmation",
+                message=f"Thank you for your submission!. Your abstract ID is {{ abstract.submission_id }}",
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[obj.email],
+                fail_silently=False,  # Raise an error if the email fails
+            )
+
 
 class AssignmentInline(admin.TabularInline):
     model = Assignment
@@ -237,6 +253,20 @@ class ReviewerAdmin(ImportExportModelAdmin):
     list_filter = ('expertise_area',)
     inlines = [AssignmentInline]
 
+    def save_model(self, request, obj, form, change):
+        # Call the parent class's save_model to save the object
+        super().save_model(request, obj, form, change)
+
+        # Send email after saving
+        if obj.email:
+            send_mail(
+                subject=f"Abstract Review Confirmation",
+                message=f"Thank you for your reistering to be a reviewer.",
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[obj.email],
+                fail_silently=False,  # Raise an error if the email fails
+            )
+
 
 @admin.register(Assignment)
 class AssignmentAdmin(ImportExportModelAdmin):
@@ -246,6 +276,39 @@ class AssignmentAdmin(ImportExportModelAdmin):
     search_fields = ('abstract__abstract_title', 'reviewer__full_name')
     autocomplete_fields = ('abstract', 'reviewer')
     ordering = ('-assigned_at',)
+
+    def save_model(self, request, obj, form, change):
+    # Call the parent class's save_model to save the object
+        super().save_model(request, obj, form, change)
+
+    # Send email after saving
+        if obj.email:
+            # Prepare email content
+            subject = "New Abstract Assignment"
+            plain_message = (
+                f"Dear {obj.full_name},\n\n"
+                f"You have been assigned a new abstract for review.\n\n"
+                f"Abstract ID: {obj.abstract_id}\n"
+                f"Title: {obj.abstract_title}\n\n"
+                f"Please log in to the review portal to begin your review."
+            )
+            html_message = f"""
+            <p>Dear {obj.full_name},</p>
+            <p>You have been assigned a new abstract for review.</p>
+            <p><strong>Abstract ID:</strong> {obj.abstract_id}</p>
+            <p><strong>Title:</strong> {obj.abstract_title}</p>
+            <p>Please log in to the review portal to begin your review.</p>
+            """
+
+            # Send the email
+            send_mail(
+                subject=subject,
+                message=plain_message,
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[obj.email],
+                html_message=html_message,
+                fail_silently=False,
+            )
 
 
 @admin.register(EmailLog)
@@ -279,6 +342,39 @@ class ReviewsAdmin(ImportExportModelAdmin):
             )
         }),
     )
+
+    def save_model(self, request, obj, form, change):
+    # Call the parent class's save_model to save the object
+        super().save_model(request, obj, form, change)
+
+    # Send email after saving
+        if obj.email:
+            # Prepare email content
+            subject = "Review Submission Confirmation"
+            plain_message = (
+                f"Dear {obj.full_name},\n\n"
+                f"hank you for submitting your review.\n\n"
+                f"Abstract ID: {obj.abstract_id}\n"
+                f"Title: {obj.abstract_title}\n\n"
+                f"Your review has been successfully recorded."
+            )
+            html_message = f"""
+            <p>Dear {obj.full_name},</p>
+            <p>Thank you for submitting your review.</p>
+            <p><strong>Abstract ID:</strong> {obj.abstract_id}</p>
+            <p><strong>Title:</strong> {obj.abstract_title}</p>
+            <p>Your review has been successfully recorded.</p>
+            """
+
+            # Send the email
+            send_mail(
+                subject=subject,
+                message=plain_message,
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[obj.email],
+                html_message=html_message,
+                fail_silently=False,
+            )
 
 admin.site.register(Track)
 admin.site.register(PresentationType)

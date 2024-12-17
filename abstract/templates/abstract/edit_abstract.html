@@ -18,7 +18,29 @@
     <form method="post" enctype="multipart/form-data">
         {% csrf_token %}
         {{ abstract_form.media }}
-        {{ abstract_form.as_p }}
+        
+        <!-- General Form Errors -->
+        {% if abstract_form.non_field_errors %}
+            <div class="alert alert-danger">
+                {% for error in abstract_form.non_field_errors %}
+                    <p>{{ error }}</p>
+                {% endfor %}
+            </div>
+        {% endif %}
+        
+        <!-- Abstract Form -->
+        <div class="form-group">
+            {{ abstract_form.as_p }}
+            {% for field in abstract_form %}
+                {% if field.errors %}
+                    <div class="alert alert-danger mt-1">
+                        {% for error in field.errors %}
+                            <p>{{ error }}</p>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            {% endfor %}
+        </div>
         
         <!-- Authors Section -->
         <div class="section-header">Authors</div>
@@ -27,6 +49,13 @@
             {% for form in author_formset %}
                 <div class="inline-form">
                     {{ form.as_p }}
+                    {% if form.non_field_errors %}
+                        <div class="alert alert-danger mt-1">
+                            {% for error in form.non_field_errors %}
+                                <p>{{ error }}</p>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
                     <button type="button" class="remove-author">Remove</button>
                 </div>
             {% endfor %}
@@ -40,6 +69,13 @@
             {% for form in presenter_formset %}
                 <div class="inline-form">
                     {{ form.as_p }}
+                    {% if form.non_field_errors %}
+                        <div class="alert alert-danger mt-1">
+                            {% for error in form.non_field_errors %}
+                                <p>{{ error }}</p>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
                     <button type="button" class="remove-presenter">Remove</button>
                 </div>
             {% endfor %}
