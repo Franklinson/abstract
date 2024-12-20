@@ -1,4 +1,10 @@
-[
-  { "GAND_number": "12345", "name": "John Doe" },
-  { "GAND_number": "67890", "name": "Jane Smith" }
-]
+{
+  "good_standing": [
+    { "GAND_number": "12345", "name": "John Doe" },
+    { "GAND_number": "67890", "name": "Jane Smith" }
+  ],
+  "not_in_good_standing": [
+    { "GAND_number": "11223", "name": "Mark Johnson" },
+    { "GAND_number": "33445", "name": "Emily Davis" }
+  ]
+}

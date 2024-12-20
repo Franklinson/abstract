@@ -12,9 +12,10 @@ class Register(models.Model):
     )
 
     Category = (
-        ('Student', 'Student'),
-        ('GAND Member', 'GAND Member'),
+        ('GAND Student', 'GAND Student'),
+        ('GAND Full Member', 'GAND Full Member'),
         ('Non GAND Member', 'Non GAND Member'),
+        ('Non GAND Student', 'Non GAND Student'),
         ('International', 'International'),
     )
 

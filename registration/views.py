@@ -19,6 +19,7 @@ from reportlab.lib.pagesizes import letter
 from reportlab.platypus import Table, TableStyle
 from reportlab.lib import colors
 from django.utils.http import urlencode
+from .forms import load_gand_data, validate_gand_number
 
 
 
@@ -168,20 +169,62 @@ def generate_pdf_ticket(registration, qr_code):
     return buffer
 
 
+
+def fetch_member_info(request):
+    gand_number = request.GET.get('gand_number')
+    gand_data = load_gand_data()
+
+    if gand_number:
+        for member in gand_data.get("good_standing", []):
+            if member.get("GAND_number") == gand_number:
+                return JsonResponse({"success": True, "name": member.get("name"), "standing": "good_standing"})
+        for member in gand_data.get("not_in_good_standing", []):
+            if member.get("GAND_number") == gand_number:
+                return JsonResponse({"success": True, "name": member.get("name"), "standing": "not_in_good_standing"})
+        return JsonResponse({"success": False, "message": "GAND number not found."})
+    return JsonResponse({"success": False, "message": "GAND number is required."})
+
+
+
 def register(request):
+    # Pricing logic
     category_prices = {
-        'Student': 50,
-        'GAND Member': 70,
-        'Non GAND Member': 100,
-        'International': 150,
+        "good_standing": {
+            "GAND Student": 40,
+            "GAND Full Member": 60,
+        },
+        "not_in_good_standing": {
+            "GAND Student": 50,
+            "GAND Full Member": 70,
+        },
+        "fixed_pricing": {
+            "Non GAND Member": 90,
+            "Non GAND Student": 80,
+            "International": 150,
+        },
     }
 
     if request.method == 'POST':
         form = RegisterForm(request.POST, request.FILES)
         if form.is_valid():
-            # Determine the payment amount based on the category
             category = form.cleaned_data.get('category')
-            amount = category_prices.get(category) * 100  # Convert to kobo for Paystack
+            gand_number = form.cleaned_data.get('gand_number')
+            name = form.cleaned_data.get('name')
+
+            # Determine pricing based on category
+            if category in ['GAND Student', 'GAND Full Member']:
+                # Validate GAND number and determine standing
+                standing = "good_standing" if validate_gand_number(gand_number, name) else "not_in_good_standing"
+                price = category_prices[standing].get(category)
+            else:
+                # Use fixed pricing for other categories
+                price = category_prices["fixed_pricing"].get(category)
+
+            if price is None:
+                form.add_error('category', "Invalid category selection.")
+                return render(request, 'register_form.html', {'form': form, 'category_prices': category_prices})
+
+            amount = price * 100  # Convert to kobo for Paystack
 
             # Initiate payment with Paystack
             transaction_ref = form.cleaned_data.get('transaction_ref')
@@ -189,16 +232,18 @@ def register(request):
             paystack_response = initiate_paystack_payment(transaction_ref, email, amount)
 
             if paystack_response:
-                # Store form data in session for temporary storage
+                # Store form data in session
                 request.session['form_data'] = form.cleaned_data
                 request.session['transaction_ref'] = transaction_ref
-                return redirect(paystack_response['data']['authorization_url'])  # Redirect to Paystack payment page
+                return redirect(paystack_response['data']['authorization_url'])
             else:
                 form.add_error(None, "Failed to initiate payment. Please try again.")
     else:
         form = RegisterForm()
 
     return render(request, 'register_form.html', {'form': form, 'category_prices': category_prices})
+
+
 
 
 

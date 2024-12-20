@@ -48,3 +48,49 @@
 </script>
 
 {% endblock %}
+
+
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const gandInput = document.getElementById("id_gand_number");
+        const nameInput = document.getElementById("id_name");
+        const categorySelect = document.getElementById("id_category");
+        const priceDisplay = document.getElementById("price-display");
+
+        const categoryPrices = JSON.parse(document.getElementById('category_prices').textContent);
+
+        gandInput.addEventListener("blur", function () {
+            const gandNumber = gandInput.value;
+            if (gandNumber) {
+                fetch(`/registration/fetch-member-info/?gand_number=${gandNumber}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            nameInput.value = data.name;
+                            const standing = data.standing;
+                            const category = categorySelect.value;
+                            if (categoryPrices[standing]) {
+                                priceDisplay.textContent = `Price: GHS${categoryPrices[standing][category]}`;
+                            }
+                        } else {
+                            nameInput.value = "";
+                            priceDisplay.textContent = "Price: GHS0";
+                            alert(data.message || "Invalid GAND Number");
+                        }
+                    });
+            }
+        });
+
+        categorySelect.addEventListener("change", function () {
+            const gandNumber = gandInput.value;
+            const standing = gandNumber ? "good_standing" : "not_in_good_standing";  // Default if no GAND number
+            const category = categorySelect.value;
+            if (categoryPrices[standing] && categoryPrices[standing][category]) {
+                priceDisplay.textContent = `Price: GHS${categoryPrices[standing][category]}`;
+            } else {
+                priceDisplay.textContent = "Price: GHS0";
+            }
+        });
+    });
+</script>

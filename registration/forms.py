@@ -7,22 +7,33 @@ from .models import Register
 import os
 
 def load_gand_data():
+    file_path = settings.BASE_DIR / 'gand_data.json'  # Ensure this is the correct path
     try:
-        with open(settings.BASE_DIR / 'gand_data.json', 'r') as file:
-            return json.load(file)  # Returns a list of dictionaries if JSON is valid
-    except json.JSONDecodeError as e:
-        print("Error loading JSON file:", e)  # Log the error for debugging
-        return []  # Return an empty list if JSON fails to load
+        with open(file_path, 'r') as file:
+            data = json.load(file)
+            if isinstance(data, dict) and "good_standing" in data and "not_in_good_standing" in data:
+                return data
+            else:
+                raise ValueError("GAND data should contain 'good_standing' and 'not_in_good_standing' keys.")
+    except (json.JSONDecodeError, ValueError) as e:
+        print(f"Error loading GAND data: {e}")  # Log the error for debugging
+        return {"good_standing": [], "not_in_good_standing": []}  # Return a default structure
+    except FileNotFoundError:
+        print("GAND data file not found.")  # Log the error
+        return {"good_standing": [], "not_in_good_standing": []}
+
 
 def validate_gand_number(gand_number, name):
     gand_data = load_gand_data()
-    if not isinstance(gand_data, list):
-        raise TypeError("GAND data should be a list of dictionaries.")
     
-    for entry in gand_data:
-        if isinstance(entry, dict) and entry.get('GAND_number') == gand_number and entry.get('name') == name:
+    for entry in gand_data.get("good_standing", []):
+        if entry.get('GAND_number') == gand_number and entry.get('name') == name:
+            return True
+    for entry in gand_data.get("not_in_good_standing", []):
+        if entry.get('GAND_number') == gand_number and entry.get('name') == name:
             return True
     return False
+
 
 class RegisterForm(forms.ModelForm):
     class Meta:
@@ -54,10 +65,12 @@ class RegisterForm(forms.ModelForm):
         category = cleaned_data.get('category')
         gand_number = cleaned_data.get('gand_number')
         name = cleaned_data.get('name')
-        
-        # Validate GAND number if required for the selected category
-        if category in ['GAND Member', 'Student']:
+
+        if category in ['GAND Student', 'GAND Full Member']:
             if not gand_number:
                 raise ValidationError("GAND number is required for this category.")
             if not validate_gand_number(gand_number, name):
                 raise ValidationError("GAND number and name do not match our records.")
+
+        # No validation needed for other categories
+        return cleaned_data

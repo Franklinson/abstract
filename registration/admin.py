@@ -3,8 +3,11 @@ from.models import *
 from import_export.admin import ImportExportModelAdmin
 from import_export import resources, fields
 
-admin.site.register(Register)
+# admin.site.register(Register)
 
+@admin.register(Register)
+class RegisterAdmin(ImportExportModelAdmin):
+    ordering = ('name',)
 # class EmailLogResource(resources.ModelResource):
 #     abstract = fields.Field(
 #         column_name='abstract',
@@ -15,6 +18,7 @@ admin.site.register(Register)
 #     class Meta:
 #         model = EmailLog
 #         fields = ('recipient', 'abstract','subject', 'plain_message', 'sent_at')
+
 
 @admin.register(EmailLog)
 class EmailLogtAdmin(ImportExportModelAdmin):
