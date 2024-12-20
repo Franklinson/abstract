@@ -71,3 +71,29 @@ class EmailLog(models.Model):
 
     def __str__(self):
         return f"Email to {self.recipient} - {self.subject}"
+    
+
+
+
+class Coupon(models.Model):
+    COUPON_TYPE_CHOICES = (
+        ('percentage', 'Percentage'),
+        ('fixed', 'Fixed Amount'),
+    )
+
+    code = models.CharField(max_length=50, unique=True)
+    discount_type = models.CharField(max_length=10, choices=COUPON_TYPE_CHOICES)
+    discount_value = models.DecimalField(max_digits=10, decimal_places=2)
+    is_active = models.BooleanField(default=True)
+    expiry_date = models.DateField(null=True, blank=True)
+
+    def is_valid(self):
+        from datetime import date
+        if not self.is_active:
+            return False
+        if self.expiry_date and self.expiry_date < date.today():
+            return False
+        return True
+
+    def __str__(self):
+        return self.code

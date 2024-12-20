@@ -3,7 +3,7 @@ from django.conf import settings
 from django.shortcuts import render, redirect
 from .forms import RegisterForm
 from django.http import HttpResponse, JsonResponse
-from .models import Register
+from .models import *
 from django.contrib import messages
 from django.urls import reverse
 import qrcode
@@ -339,3 +339,34 @@ def verify_payment(transaction_ref):
             return True
     print("Paystack verification failed with status code:", response.status_code)
     return False
+
+
+
+
+def validate_coupon(request):
+    code = request.GET.get('code')
+    total_price = request.GET.get('total_price')
+
+    try:
+        total_price = float(total_price)
+    except (ValueError, TypeError):
+        return JsonResponse({"success": False, "message": "Invalid total price."})
+
+    try:
+        coupon = Coupon.objects.get(code=code)
+        if not coupon.is_valid():
+            return JsonResponse({"success": False, "message": "Coupon is invalid or expired."})
+
+        if coupon.discount_type == 'percentage':
+            discount = total_price * (coupon.discount_value / 100)
+        elif coupon.discount_type == 'fixed':
+            discount = coupon.discount_value
+        else:
+            discount = 0
+
+        # Ensure discount doesn't exceed total price
+        discount = min(discount, total_price)
+
+        return JsonResponse({"success": True, "discount": discount, "final_price": total_price - discount})
+    except Coupon.DoesNotExist:
+        return JsonResponse({"success": False, "message": "Invalid coupon code."})

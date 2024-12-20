@@ -3,7 +3,7 @@ from.models import *
 from import_export.admin import ImportExportModelAdmin
 from import_export import resources, fields
 
-# admin.site.register(Register)
+admin.site.register(Coupon)
 
 @admin.register(Register)
 class RegisterAdmin(ImportExportModelAdmin):
@@ -28,3 +28,4 @@ class EmailLogtAdmin(ImportExportModelAdmin):
     search_fields = ('subject', 'recipient')
     # autocomplete_fields = ('abstract', )
     ordering = ('-sent_at',)
+
