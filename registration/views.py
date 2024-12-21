@@ -20,6 +20,7 @@ from reportlab.platypus import Table, TableStyle
 from reportlab.lib import colors
 from django.utils.http import urlencode
 from .forms import load_gand_data, validate_gand_number
+from decimal import Decimal
 
 
 
@@ -210,38 +211,73 @@ def register(request):
             category = form.cleaned_data.get('category')
             gand_number = form.cleaned_data.get('gand_number')
             name = form.cleaned_data.get('name')
+            coupon_code = request.POST.get('coupon_code')
+
+            base_price = Decimal(0)
+            discount = Decimal(0)
+            final_price = Decimal(0)
 
             # Determine pricing based on category
             if category in ['GAND Student', 'GAND Full Member']:
                 # Validate GAND number and determine standing
                 standing = "good_standing" if validate_gand_number(gand_number, name) else "not_in_good_standing"
-                price = category_prices[standing].get(category)
+                base_price = Decimal(category_prices[standing].get(category, 0))
             else:
                 # Use fixed pricing for other categories
-                price = category_prices["fixed_pricing"].get(category)
+                base_price = Decimal(category_prices["fixed_pricing"].get(category, 0))
 
-            if price is None:
+            if base_price == 0:
                 form.add_error('category', "Invalid category selection.")
                 return render(request, 'register_form.html', {'form': form, 'category_prices': category_prices})
 
-            amount = price * 100  # Convert to kobo for Paystack
+            # Apply coupon if provided
+            print(f"Coupon not applied")
+            if coupon_code:
+                print(f"Coupon applied")
+                try:
+                    coupon = Coupon.objects.get(code=coupon_code)
+                    if coupon.is_valid():
+                        if coupon.discount_type == 'percentage':
+                            discount = base_price * (Decimal(coupon.discount_value) / Decimal(100))
+                        elif coupon.discount_type == 'fixed':
+                            discount = Decimal(coupon.discount_value)
+                        discount = min(discount, base_price)  # Ensure discount doesn’t exceed base price
+                        print(f"Coupon applied: {coupon_code}, Discount: {discount}")
+                    else:
+                        messages.error(request, "Coupon is invalid or expired.")
+                except Coupon.DoesNotExist:
+                    messages.error(request, "Invalid coupon code.")
+                    discount = Decimal(0)
 
-            # Initiate payment with Paystack
+            # Calculate final price after discount
+            final_price = base_price - discount
+            print(f"Base Price: {base_price}, Discount: {discount}, Final Price: {final_price}")
+
+            # Store form data and initiate payment with Paystack
             transaction_ref = form.cleaned_data.get('transaction_ref')
             email = form.cleaned_data.get('email')
+            amount = int(final_price * 100)  # Convert discounted final price to kobo for Paystack
+            print(f"Transaction Ref: {transaction_ref}, Amount (kobo): {amount}")
+
+            # Initiate Paystack payment
             paystack_response = initiate_paystack_payment(transaction_ref, email, amount)
 
             if paystack_response:
-                # Store form data in session
+                # Store form data in session for later use
                 request.session['form_data'] = form.cleaned_data
                 request.session['transaction_ref'] = transaction_ref
                 return redirect(paystack_response['data']['authorization_url'])
             else:
                 form.add_error(None, "Failed to initiate payment. Please try again.")
+        else:
+            messages.error(request, "Please correct the errors in the form.")
     else:
         form = RegisterForm()
 
-    return render(request, 'register_form.html', {'form': form, 'category_prices': category_prices})
+    return render(request, 'register_form.html', {
+        'form': form,
+        'category_prices': category_prices,
+    })
 
 
 
@@ -251,6 +287,7 @@ def register(request):
 
 # Helper function to initiate Paystack payment
 def initiate_paystack_payment(transaction_ref, email, amount):
+    print(f"Initiating payment with amount: {amount}")  # Debugging
     headers = {
         'Authorization': f'Bearer {settings.PAYSTACK_SECRET_KEY}',
         'Content-Type': 'application/json',
@@ -348,7 +385,8 @@ def validate_coupon(request):
     total_price = request.GET.get('total_price')
 
     try:
-        total_price = float(total_price)
+        # Convert total_price to Decimal
+        total_price = Decimal(total_price)
     except (ValueError, TypeError):
         return JsonResponse({"success": False, "message": "Invalid total price."})
 
@@ -357,16 +395,24 @@ def validate_coupon(request):
         if not coupon.is_valid():
             return JsonResponse({"success": False, "message": "Coupon is invalid or expired."})
 
+        # Calculate the discount
         if coupon.discount_type == 'percentage':
-            discount = total_price * (coupon.discount_value / 100)
+            discount = total_price * (Decimal(coupon.discount_value) / Decimal(100))
         elif coupon.discount_type == 'fixed':
-            discount = coupon.discount_value
+            discount = Decimal(coupon.discount_value)
         else:
-            discount = 0
+            discount = Decimal(0)
 
-        # Ensure discount doesn't exceed total price
+        # Ensure discount does not exceed total_price
         discount = min(discount, total_price)
 
-        return JsonResponse({"success": True, "discount": discount, "final_price": total_price - discount})
+        # Calculate final price
+        final_price = total_price - discount
+
+        return JsonResponse({
+            "success": True,
+            "discount": float(discount),  # Convert Decimal to float for JSON serialization
+            "final_price": float(final_price),  # Convert Decimal to float for JSON serialization
+        })
     except Coupon.DoesNotExist:
         return JsonResponse({"success": False, "message": "Invalid coupon code."})
