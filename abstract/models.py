@@ -188,3 +188,4 @@ class EmailLog(models.Model):
 
     def __str__(self):
         return f"Email to {self.recipient} - {self.subject}"
+    

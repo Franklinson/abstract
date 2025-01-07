@@ -3,10 +3,10 @@ from celery import current_app
 from datetime import timedelta
 from django.conf import settings
 from django.utils.timezone import now
-from django.core.mail import send_mail
+from django.core.mail import send_mail, mail_admins
 from django.template.loader import render_to_string
 from django.utils.html import strip_tags
-from .models import Assignment
+from .models import Assignment, EmailLog, Abstract
 
 @shared_task
 def send_reminder_email(assignment_id, message_type):
@@ -84,7 +84,7 @@ def schedule_reminders(assignment):
 
 
 
-#cancel reinder
+#cancel reminder
 def cancel_reminders(assignment):
     """
     Cancel scheduled reminder tasks when the review is submitted.
@@ -101,3 +101,41 @@ def cancel_reminders(assignment):
     assignment.task_1_day_id = None
     assignment.overdue_task_ids = []
     assignment.save()
+
+
+@shared_task
+def send_email_task(email_type, subject, recipient, template_name, context, is_admin=False):
+    """
+    Celery task to send emails and log them.
+    """
+    abstract = Abstract.object.all()
+    html_message = render_to_string(template_name, context)
+    plain_message = strip_tags(html_message)
+
+    if is_admin:
+        mail_admins(
+            subject=subject,
+            message=plain_message,
+            html_message=html_message,
+            fail_silently=False,
+        )
+    else:
+        send_mail(
+            subject=subject,
+            message=plain_message,
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            recipient_list=[recipient],
+            html_message=html_message,
+            fail_silently=False,
+        )
+
+    # Log the email
+    EmailLog.objects.create(
+        recipient=recipient,
+        subject=subject,
+        plain_message=plain_message,
+        html_message=html_message,
+        abstract=abstract.abstract_title,
+    )
+
+

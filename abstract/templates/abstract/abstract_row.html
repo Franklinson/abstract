@@ -8,11 +8,13 @@
         <td>{{ abstract.track }}</td>
         <td>{{ abstract.date_created|date:"Y-m-d H:i" }}</td>
         <td>
-            {% for review in abstract.reviews.all %}
-                <p>{{ review.comment }}</p>
-            {% empty %}
-                Not reviewed yet.
-            {% endfor %}
+                {% for review in abstract.reviews.all %}
+                    {% if abstract.status != Reviewed%}
+                    <p>{{ review.comment }}</p>
+                    {% endif %}
+                {% empty %}
+                    Not reviewed yet.
+                {% endfor %}
         </td>
         
         <td><a class="btn btn-sm btn-info" href="{% url 'edit_abstract' abstract.id %}">Update</a></td>

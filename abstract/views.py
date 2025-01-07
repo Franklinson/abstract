@@ -1,3 +1,4 @@
+import json
 from django.core.mail import send_mail, mail_admins
 from django.forms import inlineformset_factory
 from django.shortcuts import render, redirect
@@ -11,7 +12,7 @@ from django.contrib import messages
 from django.template.loader import render_to_string
 from django.utils.html import strip_tags
 from django.contrib.auth.decorators import login_required
-from .tasks import schedule_reminders, cancel_reminders
+from .tasks import schedule_reminders, cancel_reminders, send_email_task
 
 
 @login_required(login_url='login')
@@ -36,51 +37,36 @@ def create_abstract(request):
             presenter_formset.instance = abstract
             presenter_formset.save()
 
-            # Render email content from templates
-            user_subject = 'Abstract Submission Confirmation'
-            user_html_message = render_to_string('emails/user_confirmation_email.html', {
-                'abstract': abstract
-            })
-            user_plain_message = strip_tags(user_html_message)
+            # Render email context
+            user_email_context = {
+                'abstract': {
+                    'submission_id': abstract.submission_id,
+                    'abstract_title': abstract.abstract_title,
+                    'abstract': abstract.abstract,
+                    'status': abstract.status,
+                    'date_created': abstract.date_created.strftime('%Y-%m-%d %H:%M:%S'),
+                }
+            }
+            admin_email_context = {'abstract': abstract, 'user': request.user}
 
-            send_mail(
-                subject=user_subject,
-                message=user_plain_message,
-                from_email=settings.DEFAULT_FROM_EMAIL,
-                recipient_list=[request.user.email],
-                html_message=user_html_message,
-                fail_silently=False,
-            )
-
-            EmailLog.objects.create(
+            # Send user confirmation email via Celery
+            send_email_task.delay(
+                email_type='user',
+                subject='Abstract Submission Confirmation',
                 recipient=request.user.email,
-                subject=user_subject,
-                plain_message=user_plain_message,
-                html_message=user_html_message,
-                abstract=abstract,
+                template_name='emails/user_confirmation_email.html',
+                context=user_email_context,
+                is_admin=False
             )
 
-            # Send notification email to admins
-            admin_subject = 'New Abstract Submission'
-            admin_html_message = render_to_string('emails/admin_notification_email.html', {
-                'abstract': abstract,
-                'user': request.user
-            })
-            admin_plain_message = strip_tags(admin_html_message)
-
-            mail_admins(
-                subject=admin_subject,
-                message=admin_plain_message,
-                html_message=admin_html_message,
-                fail_silently=False,
-            )
-
-            EmailLog.objects.create(
-                recipient=request.user.email,
-                subject=admin_subject,
-                plain_message=admin_plain_message,
-                html_message=admin_html_message,
-                abstract=abstract,
+            # Send admin notification email via Celery
+            send_email_task.delay(
+                email_type='admin',
+                subject='New Abstract Submission',
+                recipient=None,  # Not required for mail_admins
+                template_name='emails/admin_notification_email.html',
+                context=admin_email_context,
+                is_admin=True
             )
 
             return redirect('author_dashboard')
@@ -127,29 +113,25 @@ def edit_abstract(request, id):
             presenter_formset.instance = abstract
             presenter_formset.save()
 
-            # Render email content from template
-            user_subject = 'Abstract Updated Successfully'
-            user_html_message = render_to_string('emails/abstract_update_confirmation.html', {
-                'abstract': abstract
-            })
-            user_plain_message = strip_tags(user_html_message)  # Strip HTML tags for plain text version
+            # Serialize abstract object to dictionary
+            user_email_context = {
+                'abstract': {
+                    'submission_id': abstract.submission_id,
+                    'abstract_title': abstract.abstract_title,
+                    'abstract': abstract.abstract,
+                    'status': abstract.status,
+                    'date_created': abstract.date_created.strftime('%Y-%m-%d %H:%M:%S'),
+                }
+            }
 
-            # Send confirmation email on edit
-            send_mail(
-                subject=user_subject,
-                message=user_plain_message,  # Plain text message with tags removed
-                from_email=settings.DEFAULT_FROM_EMAIL,
-                recipient_list=[request.user.email],
-                html_message=user_html_message,  # HTML message
-                fail_silently=False,
-            )
-
-            EmailLog.objects.create(
+            # Send confirmation email asynchronously via Celery
+            send_email_task.delay(
+                email_type='user',
+                subject='Abstract Updated Successfully',
                 recipient=request.user.email,
-                subject=user_subject,
-                plain_message=user_plain_message,
-                html_message=user_html_message,
-                abstract=abstract,
+                template_name='emails/abstract_update_confirmation.html',
+                context=user_email_context,
+                is_admin=False
             )
 
             return redirect('author_dashboard')
@@ -170,43 +152,34 @@ def edit_abstract(request, id):
 
 
 
+
 @login_required(login_url='login')
 def delete_abstract(request, id):
     abstract = get_object_or_404(Abstract, id=id)
 
     if request.method == 'POST':
-        # Delete the abstract and associated authors/presenters (if cascading)
+        # Store email-related details before deleting the abstract
+        user_email_context = {'abstract': abstract}
+        user_email = request.user.email
+
+        # Delete the abstract and associated data
         abstract.delete()
 
-        # Render email content from template
-        user_subject = 'Abstract Deleted Successfully'
-        user_html_message = render_to_string('emails/abstract_delete_confirmation.html', {
-            'abstract': abstract
-        })
-        user_plain_message = strip_tags(user_html_message)  # Plain text version
-
-        # Send confirmation email on delete
-        send_mail(
-            subject=user_subject,
-            message=user_plain_message,  # Plain text message with tags removed
-            from_email=settings.DEFAULT_FROM_EMAIL,
-            recipient_list=[request.user.email],
-            html_message=user_html_message,  # HTML message
-            fail_silently=False,
+        # Send confirmation email asynchronously via Celery
+        send_email_task.delay(
+            email_type='user',
+            subject='Abstract Deleted Successfully',
+            recipient=user_email,
+            template_name='emails/abstract_delete_confirmation.html',
+            context=user_email_context,
+            is_admin=False
         )
-
-        EmailLog.objects.create(
-                recipient=request.user.email,
-                subject=user_subject,
-                plain_message=user_plain_message,
-                html_message=user_html_message,
-                abstract=abstract,
-            )
 
         messages.success(request, 'Abstract and associated data deleted successfully.')
         return redirect('author_dashboard')
 
     return render(request, 'abstract/confirm_delete.html', {'abstract': abstract})
+
 
 
 @login_required(login_url='login')
@@ -261,63 +234,56 @@ def create_reviewer(request):
 # for the chair
 @login_required(login_url='login')
 def assign_reviewers(request, abstract_id):
-    # Fetch the abstract
     abstract = get_object_or_404(Abstract, id=abstract_id)
 
-    # Get reviewers with matching expertise, excluding the submitter
     matching_reviewers = Reviewer.objects.filter(
         expertise_area=abstract.track
     ).exclude(email=abstract.user)
 
-    # Prepare reviewer data with assignment counts
     reviewer_data = [
         {
             'reviewer': reviewer,
-            'assigned_count': Assignment.objects.filter(reviewer=reviewer).count()  # Count of abstracts assigned to the reviewer
+            'assigned_count': Assignment.objects.filter(reviewer=reviewer).count()
         }
         for reviewer in matching_reviewers
     ]
 
     if request.method == 'POST':
-        # Retrieve selected reviewers from the form
         reviewer_ids = request.POST.getlist('reviewer_ids')
         reviewers_to_assign = Reviewer.objects.filter(id__in=reviewer_ids)
 
-        # Assign each selected reviewer to the abstract
         for reviewer in reviewers_to_assign:
             assignment, created = Assignment.objects.get_or_create(abstract=abstract, reviewer=reviewer)
 
             if created:
-                # Schedule reminders for the new assignment
                 schedule_reminders(assignment)
-                print("Schedule in place")
 
-            # Prepare and send an email to the reviewer
-            reviewer_subject = 'New Abstract Assigned for Review'
-            reviewer_html_message = render_to_string('emails/reviewer_assignment_notification.html', {
-                'abstract': abstract,
-                'reviewer': reviewer
-            })
-            reviewer_plain_message = strip_tags(reviewer_html_message)  # Strip tags for plain text version
+            # Serialize email_context explicitly
+            email_context = {
+                'abstract': {
+                    'submission_id': str(abstract.submission_id),
+                    'abstract_title': str(abstract.abstract_title),
+                    'abstract': str(abstract.abstract),
+                    'status': str(abstract.status),
+                    'date_created': abstract.date_created.strftime('%Y-%m-%d %H:%M:%S'),
+                },
+                'reviewer': {
+                    'full_name': str(reviewer.full_name),
+                    'expertise_area': str(reviewer.expertise_area.track_name),
+                    'email': str(reviewer.email.email),
+                },
+            }
 
-            send_mail(
-                subject=reviewer_subject,
-                message=reviewer_plain_message,
-                from_email=settings.DEFAULT_FROM_EMAIL,
-                recipient_list=[reviewer.email],
-                html_message=reviewer_html_message,
-                fail_silently=False,
+            # Send assignment notification email asynchronously
+            send_email_task.delay(
+                email_type='reviewer',
+                subject='New Abstract Assigned for Review',
+                recipient=reviewer.email.email,
+                template_name='emails/reviewer_assignment_notification.html',
+                context=email_context,
+                is_admin=False
             )
 
-            EmailLog.objects.create(
-                recipient=request.user.email,
-                subject=reviewer_subject,
-                plain_message=reviewer_plain_message,
-                html_message=reviewer_html_message,
-                abstract=abstract,
-            )
-
-        # Update the abstract's status to 'Submitted'
         abstract.status = 'Submitted'
         abstract.save()
 
@@ -331,87 +297,82 @@ def assign_reviewers(request, abstract_id):
 
 
 
+
+
 @login_required(login_url='login')
 def add_review(request, abstract_id):
     # Get the abstract based on the provided ID
     abstract = get_object_or_404(Abstract, id=abstract_id)
+    reviewer = Reviewer.objects.all()
 
     # Ensure the user is a reviewer
     if not hasattr(request.user, 'reviewer'):
         return redirect('author_dashboard')  # Redirect if not a reviewer
 
-    # Initialize the form
     if request.method == 'POST':
         form = ReviewForm(request.POST, request.FILES)
         if form.is_valid():
             # Save the review instance without committing
             review = form.save(commit=False)
-            review.user = request.user 
-            review.reviewer = request.user.reviewer 
-            review.abstract = abstract 
+            review.user = request.user
+            review.reviewer = request.user.reviewer
+            review.abstract = abstract
             abstract.status = 'Reviewed'
             abstract.save()
             review.save()  # Save the review instance
 
             # Cancel scheduled reminders for this assignment
             assignment = Assignment.objects.get(abstract=abstract, reviewer=request.user.reviewer)
-            cancel_reminders(assignment)
+            cancel_reminders.delay(assignment)  # Asynchronous cancellation
             assignment.is_completed = True
             assignment.save()
-            print('Reminder cancelled')
 
             # 1. Send confirmation email to the abstract's author
-            author_subject = 'Review Added to Your Abstract'
-            author_html_message = render_to_string('emails/review_added_notification.html', {
-                'abstract': abstract,
+            author_email_context = {
+                'abstract': {
+                    'submission_id': str(abstract.submission_id),
+                    'user': str(abstract.user.username),
+                    'abstract_title': str(abstract.abstract_title),
+                    'abstract': str(abstract.abstract),
+                    'status': str(abstract.status),
+                    'date_created': abstract.date_created.strftime('%Y-%m-%d %H:%M:%S'),
+                },
                 'reviewer': request.user.reviewer,
-                'review': review
-            })
-            author_plain_message = strip_tags(author_html_message)
-
-            send_mail(
-                subject=author_subject,
-                message=author_plain_message,
-                from_email=settings.DEFAULT_FROM_EMAIL,
-                recipient_list=[abstract.user.email],
-                html_message=author_html_message,
-                fail_silently=False,
-            )
-
-            # Log the email to the author
-            EmailLog.objects.create(
+                # 'review': review
+            }
+            send_email_task.delay(
+                email_type='author',
+                subject='Review Added to Your Abstract',
                 recipient=abstract.user.email,
-                subject=author_subject,
-                plain_message=author_plain_message,
-                html_message=author_html_message,
-                abstract=abstract,
+                template_name='emails/review_added_notification.html',
+                context=author_email_context,
+                is_admin=False
             )
 
             # 2. Send confirmation email to the reviewer
-            reviewer_subject = 'Review Submission Confirmation'
-            reviewer_html_message = render_to_string('emails/reviewer_confirmation_notification.html', {
-                'abstract': abstract,
+            reviewer_email_context = {
+                'abstract': {
+                    'submission_id': str(abstract.submission_id),
+                    'user': str(abstract.user.username),
+                    'abstract_title': str(abstract.abstract_title),
+                    'abstract': str(abstract.abstract),
+                    'status': str(abstract.status),
+                    'date_created': abstract.date_created.strftime('%Y-%m-%d %H:%M:%S'),
+                },
                 'review': review,
-                'reviewer': request.user.reviewer,
-            })
-            reviewer_plain_message = strip_tags(reviewer_html_message)
-
-            send_mail(
-                subject=reviewer_subject,
-                message=reviewer_plain_message,
-                from_email=settings.DEFAULT_FROM_EMAIL,
-                recipient_list=[request.user.email],
-                html_message=reviewer_html_message,
-                fail_silently=False,
-            )
-
-            # Log the email to the reviewer
-            EmailLog.objects.create(
+                'reviewer': {
+                    'full_name': str(reviewer.full_name),
+                    'expertise_area': str(reviewer.expertise_area.track_name),
+                    'email': str(reviewer.email.email),
+                },
+            }
+            send_email_task.delay(
+                email_type='reviewer',
+                subject='Review Submission Confirmation',
                 recipient=request.user.email,
-                subject=reviewer_subject,
-                plain_message=reviewer_plain_message,
-                html_message=reviewer_html_message,
-                abstract=abstract,
+                template_name='emails/reviewer_confirmation_notification.html',
+                context=reviewer_email_context,
+                is_admin=False
             )
 
             return redirect('author_dashboard')
@@ -424,6 +385,7 @@ def add_review(request, abstract_id):
         'form': form,
     }
     return render(request, 'abstract/add_review.html', context)
+
 
 
 
@@ -468,11 +430,11 @@ def manager_create_abstract(request):
             
             # Save the abstract
             abstract = abstract_form.save(commit=False)
-            abstract.user = request.user 
-            
+            abstract.user = request.user
+
             # Generate a unique ID starting with 'COND-'
             unique_id = f'COND-{uuid.uuid4().hex[:8].upper()}'
-            abstract.abstract_id = unique_id 
+            abstract.abstract_id = unique_id
             abstract.save()
 
             # Save authors and presenters
@@ -481,28 +443,23 @@ def manager_create_abstract(request):
             presenter_formset.instance = abstract
             presenter_formset.save()
 
-            # Render email content from templates
-            user_subject = 'Abstract Submission Confirmation'
-            user_html_message = render_to_string('emails/user_confirmation_email.html', {
-                'abstract': abstract
-            })
-            user_plain_message = strip_tags(user_html_message)
-
-            send_mail(
-                subject=user_subject,
-                message=user_plain_message,
-                from_email=settings.DEFAULT_FROM_EMAIL,
-                recipient_list=[request.user.email],
-                html_message=user_html_message,
-                fail_silently=False,
-            )
-
-            EmailLog.objects.create(
+            # Send confirmation email asynchronously
+            user_email_context = {
+                'abstract': {
+                    'submission_id': abstract.submission_id,
+                    'abstract_title': abstract.abstract_title,
+                    'abstract': abstract.abstract,
+                    'status': abstract.status,
+                    'date_created': abstract.date_created.strftime('%Y-%m-%d %H:%M:%S'),
+                }
+            }
+            send_email_task.delay(
+                email_type='user',
+                subject='Abstract Submission Confirmation',
                 recipient=request.user.email,
-                subject=user_subject,
-                plain_message=user_plain_message,
-                html_message=user_html_message,
-                abstract=abstract,
+                template_name='emails/user_confirmation_email.html',
+                context=user_email_context,
+                is_admin=False
             )
 
             return redirect('manager')
@@ -520,15 +477,11 @@ def manager_create_abstract(request):
 
 
 
+
 @login_required(login_url='login')
 def manager_edit_abstract(request, id):
     abstract = get_object_or_404(Abstract, id=id)
 
-    # if abstract.status in ["Submitted", "Accepted"]:
-    #     messages.warning(request, "This abstract cannot be edited as it has been submitted or accepted.")
-    #     return redirect('author_dashboard')
-
-    # Inline formsets for authors and presenters
     AuthorInformationFormSet = inlineformset_factory(Abstract, AuthorInformation, form=AuthorInformationForm, extra=1, can_delete=True)
     PresenterInformationFormSet = inlineformset_factory(Abstract, PresenterInformation, form=PresenterInformationForm, extra=1, can_delete=True)
 
@@ -545,33 +498,27 @@ def manager_edit_abstract(request, id):
             # Save the formsets for authors and presenters
             author_formset.instance = abstract
             author_formset.save()
-
             presenter_formset.instance = abstract
             presenter_formset.save()
 
-           # Render email content from template
-            user_subject = 'Abstract Updated Successfully'
-            user_html_message = render_to_string('emails/abstract_update_confirmation.html', {
-                'abstract': abstract
-            })
-            user_plain_message = strip_tags(user_html_message)  # Strip HTML tags for plain text version
+            # Send confirmation email asynchronously
+            user_email_context = {
+                'abstract': {
+                    'submission_id': abstract.submission_id,
+                    'abstract_title': abstract.abstract_title,
+                    'abstract': abstract.abstract,
+                    'status': abstract.status,
+                    'date_created': abstract.date_created.strftime('%Y-%m-%d %H:%M:%S'),
+                }
+            }
 
-            # Send confirmation email on edit
-            send_mail(
-                subject=user_subject,
-                message=user_plain_message,  # Plain text message with tags removed
-                from_email=settings.DEFAULT_FROM_EMAIL,
-                recipient_list=[request.user.email],
-                html_message=user_html_message,  # HTML message
-                fail_silently=False,
-            )
-
-            EmailLog.objects.create(
+            send_email_task.delay(
+                email_type='user',
+                subject='Abstract Updated Successfully',
                 recipient=request.user.email,
-                subject=user_subject,
-                plain_message=user_plain_message,
-                html_message=user_html_message,
-                abstract=abstract,
+                template_name='emails/abstract_update_confirmation.html',
+                context=user_email_context,
+                is_admin=False
             )
 
             return redirect('manager')
@@ -591,78 +538,71 @@ def manager_edit_abstract(request, id):
 
 
 
+
 @login_required(login_url='login')
 def manager_add_review(request, abstract_id):
     # Get the abstract based on the provided ID
     abstract = get_object_or_404(Abstract, id=abstract_id)
+    reviewer = Reviewer.objects.all()
 
-    # Ensure the user is a reviewer
-    # if not hasattr(request.user, 'reviewer'):
-    #     return redirect('author_dashboard')  # Redirect if not a reviewer
-
-    # Initialize the form
     if request.method == 'POST':
         form = ManagerReviewForm(request.POST, request.FILES)
         if form.is_valid():
             # Save the review instance without committing
             review = form.save(commit=False)
-            review.user = request.user 
-            # review.reviewer = request.user.reviewer 
-            review.abstract = abstract 
+            review.user = request.user
+            review.abstract = abstract
             review.save()  # Save the review instance
-            return redirect('manager') 
-        
-        # 1. Send confirmation email to the abstract's author
-        author_subject = 'Review Added to Your Abstract'
-        author_html_message = render_to_string('emails/review_added_notification.html', {
-            'abstract': abstract,
-            'reviewer': request.user.reviewer,
-            'review': review
-        })
-        author_plain_message = strip_tags(author_html_message)  # Plain text version
 
-        send_mail(
-            subject=author_subject,
-            message=author_plain_message,  # Plain text message
-            from_email=settings.DEFAULT_FROM_EMAIL,
-            recipient_list=[abstract.user.email],
-            html_message=author_html_message,  # HTML message
-            fail_silently=False,
-        )
-
-        EmailLog.objects.create(
-                recipient=request.user.email,
-                subject=author_subject,
-                plain_message=author_plain_message,
-                html_message=author_html_message,
-                abstract=abstract,
+            # 1. Send confirmation email to the abstract's author
+            author_email_context = {
+                'abstract': {
+                    'submission_id': str(abstract.submission_id),
+                    'user': str(abstract.user.username),
+                    'abstract_title': str(abstract.abstract_title),
+                    'abstract': str(abstract.abstract),
+                    'status': str(abstract.status),
+                    'date_created': abstract.date_created.strftime('%Y-%m-%d %H:%M:%S'),
+                },
+                'reviewer': request.user.reviewer,
+                # 'review': review
+            }
+            send_email_task.delay(
+                email_type='author',
+                subject='Review Added to Your Abstract',
+                recipient=abstract.user.email,
+                template_name='emails/review_added_notification.html',
+                context=author_email_context,
+                is_admin=False
             )
 
-        # 2. Send confirmation email to the reviewer
-        reviewer_subject = 'Review Submission Confirmation'
-        reviewer_html_message = render_to_string('emails/reviewer_confirmation_notification.html', {
-            'abstract': abstract,
-            'review': review,
-            'reviewer': request.user.reviewer,
-        })
-        reviewer_plain_message = strip_tags(reviewer_html_message)  # Plain text version
-
-        send_mail(
-            subject=reviewer_subject,
-            message=reviewer_plain_message,  # Plain text message
-            from_email=settings.DEFAULT_FROM_EMAIL,
-            recipient_list=[request.user.email],
-            html_message=reviewer_html_message,  # HTML message
-            fail_silently=False,
-        )
-
-        EmailLog.objects.create(
+            # 2. Send confirmation email to the reviewer
+            reviewer_email_context = {
+                'abstract': {
+                    'submission_id': str(abstract.submission_id),
+                    'user': str(abstract.user.username),
+                    'abstract_title': str(abstract.abstract_title),
+                    'abstract': str(abstract.abstract),
+                    'status': str(abstract.status),
+                    'date_created': abstract.date_created.strftime('%Y-%m-%d %H:%M:%S'),
+                },
+                'review': review,
+                'reviewer': {
+                    'full_name': str(reviewer.full_name),
+                    'expertise_area': str(reviewer.expertise_area.track_name),
+                    'email': str(reviewer.email.email),
+                },
+            }
+            send_email_task.delay(
+                email_type='reviewer',
+                subject='Review Submission Confirmation',
                 recipient=request.user.email,
-                subject=reviewer_subject,
-                plain_message=reviewer_plain_message,
-                html_message=reviewer_html_message,
-                abstract=abstract,
+                template_name='emails/reviewer_confirmation_notification.html',
+                context=reviewer_email_context,
+                is_admin=False
             )
+
+            return redirect('manager')
 
     else:
         form = ManagerReviewForm()
@@ -673,6 +613,7 @@ def manager_add_review(request, abstract_id):
         'form': form,
     }
     return render(request, 'abstract/manager_add_review.html', context)
+
 
 
 

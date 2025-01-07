@@ -21,7 +21,7 @@ from reportlab.lib import colors
 from django.utils.http import urlencode
 from .forms import load_gand_data, validate_gand_number
 from decimal import Decimal
-
+from django.contrib.auth.decorators import login_required
 
 
 def send_registration_email(registration):
@@ -186,7 +186,7 @@ def fetch_member_info(request):
     return JsonResponse({"success": False, "message": "GAND number is required."})
 
 
-
+@login_required(login_url='login')
 def register(request):
     # Pricing logic
     category_prices = {

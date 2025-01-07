@@ -228,12 +228,13 @@ class AbstractAdmin(ImportExportModelAdmin):
         super().save_model(request, obj, form, change)
 
         # Send email after saving
-        if obj.email:
+        if obj.user:
+            # abstract = Abstract.objects.all()
             send_mail(
                 subject=f"Abstract Submission Confirmation",
-                message=f"Thank you for your submission!. Your abstract ID is {{ abstract.submission_id }}",
+                message=f"Thank you for your submission!. Your abstract ID is { obj.submission_id }",
                 from_email=settings.DEFAULT_FROM_EMAIL,
-                recipient_list=[obj.email],
+                recipient_list=[obj.user],
                 fail_silently=False,  # Raise an error if the email fails
             )
 
@@ -282,7 +283,7 @@ class AssignmentAdmin(ImportExportModelAdmin):
         super().save_model(request, obj, form, change)
 
     # Send email after saving
-        if obj.email:
+        if obj.user:
             # Prepare email content
             subject = "New Abstract Assignment"
             plain_message = (
@@ -305,7 +306,7 @@ class AssignmentAdmin(ImportExportModelAdmin):
                 subject=subject,
                 message=plain_message,
                 from_email=settings.DEFAULT_FROM_EMAIL,
-                recipient_list=[obj.email],
+                recipient_list=[obj.user],
                 html_message=html_message,
                 fail_silently=False,
             )
@@ -348,7 +349,7 @@ class ReviewsAdmin(ImportExportModelAdmin):
         super().save_model(request, obj, form, change)
 
     # Send email after saving
-        if obj.email:
+        if obj.user:
             # Prepare email content
             subject = "Review Submission Confirmation"
             plain_message = (
@@ -371,7 +372,7 @@ class ReviewsAdmin(ImportExportModelAdmin):
                 subject=subject,
                 message=plain_message,
                 from_email=settings.DEFAULT_FROM_EMAIL,
-                recipient_list=[obj.email],
+                recipient_list=[obj.user],
                 html_message=html_message,
                 fail_silently=False,
             )

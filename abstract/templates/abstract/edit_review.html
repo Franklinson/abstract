@@ -10,7 +10,7 @@
             <h4>{{ abstract.abstract_title }}</h4>
         </div>
         <div class="card-body">
-            <p><strong>Abstract Body:</strong> {{ abstract.abstract }}</p>
+            <p><strong>Abstract Body:</strong> {{ abstract.abstract|safe }}</p>
             <p><strong>Submission ID:</strong> {{ abstract.submission_id }}</p>
             <p><strong>Keywords:</strong> {{ abstract.keywords }}</p>
             <p><strong>Submitter:</strong> {{ abstract.user }}</p>
