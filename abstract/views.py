@@ -303,6 +303,8 @@ def assign_reviewers(request, abstract_id):
 def add_review(request, abstract_id):
     # Get the abstract based on the provided ID
     abstract = get_object_or_404(Abstract, id=abstract_id)
+    authors = abstract.authors.all()
+    presenters = abstract.presentor.all()
     reviewer = Reviewer.objects.all()
 
     # Ensure the user is a reviewer
@@ -323,7 +325,7 @@ def add_review(request, abstract_id):
 
             # Cancel scheduled reminders for this assignment
             assignment = Assignment.objects.get(abstract=abstract, reviewer=request.user.reviewer)
-            cancel_reminders.delay(assignment)  # Asynchronous cancellation
+            cancel_reminders.delay(assignment)
             assignment.is_completed = True
             assignment.save()
 
@@ -383,6 +385,8 @@ def add_review(request, abstract_id):
     context = {
         'abstract': abstract,
         'form': form,
+        'authors':authors,
+        'presenters':presenters
     }
     return render(request, 'abstract/add_review.html', context)
 
@@ -392,26 +396,29 @@ def add_review(request, abstract_id):
 
 @login_required(login_url='login')
 def edit_review(request, review_id):
-    # Get the existing review
     review = get_object_or_404(Reviews, id=review_id)
+    authors = review.abstract.authors.all()
+    presenters = review.abstract.presentor.all()
 
-    # Ensure the user is the reviewer who created this review
     if review.reviewer.email != request.user:
-        return redirect('author_dashboard')  # Redirect if not authorized
+        return redirect('author_dashboard')
 
-    # Initialize the form with the review instance
+    
     if request.method == 'POST':
         form = ReviewForm(request.POST, request.FILES, instance=review)
         if form.is_valid():
-            form.save()  # Directly save the form with updates
-            return redirect('author_dashboard')  # Redirect after successful submission
+            form.save()
+            return redirect('author_dashboard')
     else:
-        form = ReviewForm(instance=review)  # Pre-fill form with existing review data
+        form = ReviewForm(instance=review)
 
-    # Render the template with context
+    
     context = {
-        'abstract': review.abstract,  # Pass the associated abstract for context
+        'abstract': review.abstract,
         'form': form,
+        'authors': authors,
+        'presenters': presenters,
+
     }
     return render(request, 'abstract/edit_review.html', context)
 
@@ -543,6 +550,8 @@ def manager_edit_abstract(request, id):
 def manager_add_review(request, abstract_id):
     # Get the abstract based on the provided ID
     abstract = get_object_or_404(Abstract, id=abstract_id)
+    authors = abstract.authors.all()
+    presenters = abstract.presentor.all()
     reviewer = Reviewer.objects.all()
 
     if request.method == 'POST':
@@ -611,6 +620,8 @@ def manager_add_review(request, abstract_id):
     context = {
         'abstract': abstract,
         'form': form,
+        'authors': authors,
+        'presenters': presenters,
     }
     return render(request, 'abstract/manager_add_review.html', context)
 
@@ -622,6 +633,8 @@ def manager_add_review(request, abstract_id):
 def manager_edit_review(request, review_id):
     # Get the existing review
     review = get_object_or_404(Reviews, id=review_id)
+    authors = review.abstract.authors.all()
+    presenters = review.abstract.presentor.all()
 
     # Ensure the user is the reviewer who created this review
     # if review.reviewer.email != request.user:
@@ -640,5 +653,7 @@ def manager_edit_review(request, review_id):
     context = {
         'abstract': review.abstract,  # Pass the associated abstract for context
         'form': form,
+        'authors': authors,
+        'presenters':presenters,
     }
     return render(request, 'abstract/nanager_edit_review.html', context)

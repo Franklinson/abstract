@@ -14,8 +14,18 @@
             <p><strong>Submission ID:</strong> {{ abstract.submission_id }}</p>
             <p><strong>Keywords:</strong> {{ abstract.keywords }}</p>
             <p><strong>Submitter:</strong> {{ abstract.user }}</p>
-            <p><strong>Authors:</strong> {{ authorinformation }}</p>
-            <p><strong>Presenter:</strong> {{ presenterinformation }}</p>
+            <p><strong>Authors:</strong>
+                <ul>
+                    {% for author in authors %}
+                        <li>{{ author.author_name }} ({{ author.email }}) - {{ author.affiliation }}</li>
+                    {% endfor %}
+                </ul>
+            </p>
+            <p><strong>Presenter:</strong>
+                {% for presenter in presenters %}
+                    {{ presenter.name }} ({{ presenter.email }})
+                {% endfor %}
+            </p>
             <p><strong>Track:</strong> {{ abstract.track }}</p>
             <p><strong>Presentation Type:</strong> {{ abstract.presentation_type }}</p>
             <p><strong>Date Submitted:</strong> {{ abstract.date_created|date:"Y-m-d H:i" }}</p>

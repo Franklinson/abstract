@@ -8,7 +8,7 @@ from abstract.models import *
 from django.contrib.auth.decorators import login_required
 from registration.models import Register
 from .forms import UserUpdateForm
-
+from .tasks import send_email_task
 
 
 def home(request):
@@ -24,19 +24,22 @@ def register(request):
 
             email = form.cleaned_data.get('email')
             subject = 'Your COND account has been created'
-            message = f'Hi,\n\nYour account on COND has been successfully created.\n\nBest regards,\nThe COND Team'
+            template_name = 'emails/account_created.html'
 
-            # Send the confirmation email
-            send_mail(
-                subject,
-                message,
-                settings.DEFAULT_FROM_EMAIL,
-                [email],
-                fail_silently=False,
+            context = {'first_name': user.first_name}
+
+            # Use Celery task to send the confirmation email
+            send_email_task.delay(
+                email_type='account_creation',
+                subject=subject,
+                recipient=email,
+                template_name=template_name,
+                context=context,
+                is_admin=False
             )
 
-            messages.success(request, f'Account was created successfully ')
-            return redirect('login')
+            messages.success(request, 'Account was created successfully.')
+            return redirect('profile_update')
     else:
         form = UsersCreationForm()
 
@@ -53,7 +56,7 @@ def login(request):
         if user is not None:
             auth_login(request, user)
             messages.success(request, f'Welcome back,!')
-            return redirect('profile_update')
+            return redirect('author_dashboard')
         else:
             messages.error(request, 'Invalid email or password.')
     
@@ -65,7 +68,7 @@ def login(request):
 def logout_view(request):
     logout(request)
     messages.success(request, 'You have successfully logged out.')
-    return redirect('home')
+    return redirect('login')
 
 
 
@@ -76,7 +79,7 @@ def update_profile(request):
         form = UserUpdateForm(request.POST, instance=user)
         if form.is_valid():
             form.save()
-            return redirect('profile_update')
+            return redirect('author_dashboard')
     else:
         form = UserUpdateForm(instance=user)
 
