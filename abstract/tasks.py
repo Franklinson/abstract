@@ -108,7 +108,7 @@ def send_email_task(email_type, subject, recipient, template_name, context, is_a
     """
     Celery task to send emails and log them.
     """
-    abstract = Abstract.object.all()
+    abstract = Abstract.objects.all()
     html_message = render_to_string(template_name, context)
     plain_message = strip_tags(html_message)
 
@@ -135,7 +135,6 @@ def send_email_task(email_type, subject, recipient, template_name, context, is_a
         subject=subject,
         plain_message=plain_message,
         html_message=html_message,
-        abstract=abstract.abstract_title,
     )
 
 

@@ -8,7 +8,7 @@ from django.http import HttpResponse
 from docx import Document
 from django.core.mail import send_mail
 from django.conf import settings
-
+from .tasks import send_email_task
 
 @admin.action(description="Export selected abstracts to DOCX")
 def export_abstracts_to_docx(modeladmin, request, queryset):
@@ -213,6 +213,13 @@ class PresenterInformationInline(admin.StackedInline):
     fields = ['name', 'email']
 
 
+class AssignmentInline(admin.TabularInline):
+    model = Assignment
+    extra = 0
+    fields = ('abstract', 'status', 'assigned_at')
+    readonly_fields = ('assigned_at',)
+
+
 @admin.register(Abstract)
 class AbstractAdmin(ImportExportModelAdmin):
     resource_class = AbstractResource
@@ -221,29 +228,56 @@ class AbstractAdmin(ImportExportModelAdmin):
     search_fields = ('abstract_title', 'keywords', 'track__track_name')
     inlines = [AuthorInformationInline, PresenterInformationInline]
     ordering = ('-date_created',)
-    actions = [export_abstracts_to_docx]
+    actions = ['mark_as_accepted', 'mark_as_rejected', 'mark_as_reviewed']
 
     def save_model(self, request, obj, form, change):
-        # Call the parent class's save_model to save the object
         super().save_model(request, obj, form, change)
 
-        # Send email after saving
-        if obj.user:
-            # abstract = Abstract.objects.all()
-            send_mail(
-                subject=f"Abstract Submission Confirmation",
-                message=f"Thank you for your submission!. Your abstract ID is { obj.submission_id }",
-                from_email=settings.DEFAULT_FROM_EMAIL,
-                recipient_list=[obj.user],
-                fail_silently=False,  # Raise an error if the email fails
+        # Send email ONLY if it's a new submission (not editing)
+        if not change and obj.user:
+            send_email_task.delay(
+                email_type="abstract_submission",
+                subject="Abstract Submission Confirmation",
+                recipient=obj.user.email,
+                template_name="emails/abstract_submission.html",
+                context={"submission_id": obj.submission_id, "user_name": obj.user.first_name},
             )
 
+    # 🔹 Bulk Action: Mark Abstracts as Accepted
+    @admin.action(description="Mark selected abstracts as Accepted")
+    def mark_as_accepted(self, request, queryset):
+        self.bulk_update_status(queryset, 'Accepted', "Abstract Accepted")
 
-class AssignmentInline(admin.TabularInline):
-    model = Assignment
-    extra = 0
-    fields = ('abstract', 'status', 'assigned_at')
-    readonly_fields = ('assigned_at',)
+    # 🔹 Bulk Action: Mark Abstracts as Rejected
+    @admin.action(description="Mark selected abstracts as Rejected")
+    def mark_as_rejected(self, request, queryset):
+        self.bulk_update_status(queryset, 'Rejected', "Abstract Rejected")
+
+    # 🔹 Bulk Action: Mark Abstracts as Reviewed
+    @admin.action(description="Mark selected abstracts as Reviewed")
+    def mark_as_reviewed(self, request, queryset):
+        self.bulk_update_status(queryset, 'Reviewed', "Abstract Reviewed")
+
+    # 🔥 Bulk Update Function
+    def bulk_update_status(self, queryset, new_status, email_subject):
+        for obj in queryset:
+            obj.status = new_status
+            obj.save()
+
+            # Send email if user exists
+            if obj.user:
+                send_email_task.delay(
+                    email_type=f"abstract_{new_status.lower()}",
+                    subject=email_subject,
+                    recipient=obj.user.email,
+                    template_name="emails/abstract_status_update.html",
+                    context={
+                        "user_name": obj.user.first_name,
+                        "abstract_title": obj.abstract_title,
+                        "submission_id": obj.submission_id,
+                        "new_status": new_status,
+                    },
+                )
 
 
 @admin.register(Reviewer)
@@ -255,17 +289,16 @@ class ReviewerAdmin(ImportExportModelAdmin):
     inlines = [AssignmentInline]
 
     def save_model(self, request, obj, form, change):
-        # Call the parent class's save_model to save the object
         super().save_model(request, obj, form, change)
 
-        # Send email after saving
-        if obj.email:
-            send_mail(
-                subject=f"Abstract Review Confirmation",
-                message=f"Thank you for your reistering to be a reviewer.",
-                from_email=settings.DEFAULT_FROM_EMAIL,
-                recipient_list=[obj.email],
-                fail_silently=False,  # Raise an error if the email fails
+        # Send email ONLY if it's a new reviewer registration (not editing)
+        if not change and obj.email:
+            send_email_task.delay(
+                email_type="reviewer_registration",
+                subject="Abstract Review Confirmation",
+                recipient=obj.email,
+                template_name="emails/reviewer_registration.html",
+                context={"full_name": obj.full_name},
             )
 
 
@@ -279,49 +312,21 @@ class AssignmentAdmin(ImportExportModelAdmin):
     ordering = ('-assigned_at',)
 
     def save_model(self, request, obj, form, change):
-    # Call the parent class's save_model to save the object
         super().save_model(request, obj, form, change)
 
-    # Send email after saving
-        if obj.user:
-            # Prepare email content
-            subject = "New Abstract Assignment"
-            plain_message = (
-                f"Dear {obj.full_name},\n\n"
-                f"You have been assigned a new abstract for review.\n\n"
-                f"Abstract ID: {obj.abstract_id}\n"
-                f"Title: {obj.abstract_title}\n\n"
-                f"Please log in to the review portal to begin your review."
+        # Send email ONLY if it's a new assignment (not editing)
+        if not change and obj.user:
+            send_email_task.delay(
+                email_type="abstract_assignment",
+                subject="New Abstract Assignment",
+                recipient=obj.user.email,
+                template_name="emails/abstract_assignment.html",
+                context={
+                    "full_name": obj.user.first_name,
+                    "abstract_id": obj.abstract.submission_id,
+                    "abstract_title": obj.abstract.abstract_title,
+                },
             )
-            html_message = f"""
-            <p>Dear {obj.full_name},</p>
-            <p>You have been assigned a new abstract for review.</p>
-            <p><strong>Abstract ID:</strong> {obj.abstract_id}</p>
-            <p><strong>Title:</strong> {obj.abstract_title}</p>
-            <p>Please log in to the review portal to begin your review.</p>
-            """
-
-            # Send the email
-            send_mail(
-                subject=subject,
-                message=plain_message,
-                from_email=settings.DEFAULT_FROM_EMAIL,
-                recipient_list=[obj.user],
-                html_message=html_message,
-                fail_silently=False,
-            )
-
-
-@admin.register(EmailLog)
-class EmailLogtAdmin(ImportExportModelAdmin):
-    resource_class = EmailLogResource
-    list_display = ('recipient', 'abstract','subject', 'plain_message', 'sent_at')
-    list_filter = ('subject', 'sent_at')
-    search_fields = ('abstract__abstract_title', 'recipient')
-    autocomplete_fields = ('abstract', )
-    ordering = ('-sent_at',)
-
-
 
 
 @admin.register(Reviews)
@@ -337,45 +342,44 @@ class ReviewsAdmin(ImportExportModelAdmin):
         }),
         ('Scoring', {
             'fields': (
-                'title', 'content', 'relevance', 'quality', 'clarity', 
-                'methods', 'structure', 'data_collection', 'result', 
+                'title', 'content', 'relevance', 'quality', 'clarity',
+                'methods', 'structure', 'data_collection', 'result',
                 'conclusion', 'total'
             )
         }),
     )
 
     def save_model(self, request, obj, form, change):
-    # Call the parent class's save_model to save the object
         super().save_model(request, obj, form, change)
 
-    # Send email after saving
-        if obj.user:
-            # Prepare email content
-            subject = "Review Submission Confirmation"
-            plain_message = (
-                f"Dear {obj.full_name},\n\n"
-                f"hank you for submitting your review.\n\n"
-                f"Abstract ID: {obj.abstract_id}\n"
-                f"Title: {obj.abstract_title}\n\n"
-                f"Your review has been successfully recorded."
-            )
-            html_message = f"""
-            <p>Dear {obj.full_name},</p>
-            <p>Thank you for submitting your review.</p>
-            <p><strong>Abstract ID:</strong> {obj.abstract_id}</p>
-            <p><strong>Title:</strong> {obj.abstract_title}</p>
-            <p>Your review has been successfully recorded.</p>
-            """
-
-            # Send the email
-            send_mail(
-                subject=subject,
-                message=plain_message,
-                from_email=settings.DEFAULT_FROM_EMAIL,
-                recipient_list=[obj.user],
-                html_message=html_message,
-                fail_silently=False,
+        # Send email ONLY if it's a new review submission (not editing)
+        if not change and obj.user:
+            send_email_task.delay(
+                email_type="review_submission",
+                subject="Review Submission Confirmation",
+                recipient=obj.user.email,
+                template_name="emails/review_submission.html",
+                context={
+                    "full_name": obj.user.first_name,
+                    "abstract_id": obj.abstract.submission_id,
+                    "abstract_title": obj.abstract.abstract_title,
+                },
             )
 
+
+
+@admin.register(EmailLog)
+class EmailLogtAdmin(ImportExportModelAdmin):
+    resource_class = EmailLogResource
+    list_display = ('recipient', 'abstract','subject', 'plain_message', 'sent_at')
+    list_filter = ('subject', 'sent_at')
+    search_fields = ('abstract__abstract_title', 'recipient')
+    autocomplete_fields = ('abstract', )
+    ordering = ('-sent_at',)
+
+
+
+
+# Register additional models
 admin.site.register(Track)
 admin.site.register(PresentationType)
