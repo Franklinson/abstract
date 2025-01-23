@@ -30,6 +30,7 @@ def create_abstract(request):
             abstract = abstract_form.save(commit=False)
             abstract.user = request.user 
             abstract.save()
+            abstract_form.save_m2m()
 
             # Save authors and presenters
             author_formset.instance = abstract
@@ -90,7 +91,7 @@ def edit_abstract(request, id):
     abstract = get_object_or_404(Abstract, id=id)
 
     if abstract.status in ["Submitted", "Accepted"]:
-        messages.warning(request, "This abstract cannot be edited as it has been submitted or accepted.")
+        messages.warning(request, "This abstract cannot be edited as it is under review or accepted.")
         return redirect('author_dashboard')
 
     # Inline formsets for authors and presenters
@@ -106,6 +107,7 @@ def edit_abstract(request, id):
             # Update the abstract
             abstract = abstract_form.save(commit=False)
             abstract.save()
+            abstract_form.save_m2m()
 
             # Save the formsets for authors and presenters
             author_formset.instance = abstract
@@ -443,6 +445,7 @@ def manager_create_abstract(request):
             unique_id = f'COND-{uuid.uuid4().hex[:8].upper()}'
             abstract.abstract_id = unique_id
             abstract.save()
+            abstract_form.save_m2m()
 
             # Save authors and presenters
             author_formset.instance = abstract
@@ -501,6 +504,7 @@ def manager_edit_abstract(request, id):
             # Update the abstract
             abstract = abstract_form.save(commit=False)
             abstract.save()
+            abstract_form.save_m2m()
 
             # Save the formsets for authors and presenters
             author_formset.instance = abstract

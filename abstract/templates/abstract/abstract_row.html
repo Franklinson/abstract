@@ -10,7 +10,7 @@
         <td>
                 {% for review in abstract.reviews.all %}
                     {% if abstract.status != Reviewed%}
-                    <p>{{ review.comment }}</p>
+                    <p>{{ review.comment|safe }}</p>
                     {% endif %}
                 {% empty %}
                     Not reviewed yet.

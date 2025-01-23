@@ -4,6 +4,9 @@ from django.core.validators import MinValueValidator, MaxValueValidator
 from shortuuid.django_fields import ShortUUIDField
 from django_ckeditor_5.fields import CKEditor5Field
 from django.core.exceptions import ValidationError
+from taggit.managers import TaggableManager
+
+
 
 # event information for which the abstract will be submitted to
 # class Event(models.Model):
@@ -80,7 +83,7 @@ class Abstract(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, null=True)
     abstract_title = models.CharField(max_length=200)
     abstract = CKEditor5Field('Abstract', config_name='extends', validators=[validate_word_count])
-    keywords = models.CharField(max_length=100)
+    keywords = TaggableManager()
     attachment = models.FileField(upload_to='abstract_files')
     # event = models.ForeignKey(Event, on_delete=models.CASCADE)
     track = models.ForeignKey(Track, on_delete=models.CASCADE)

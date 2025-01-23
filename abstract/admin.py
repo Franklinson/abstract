@@ -9,6 +9,7 @@ from docx import Document
 from django.core.mail import send_mail
 from django.conf import settings
 from .tasks import send_email_task
+from django.utils.html import strip_tags
 
 @admin.action(description="Export selected abstracts to DOCX")
 def export_abstracts_to_docx(modeladmin, request, queryset):
@@ -43,12 +44,12 @@ def export_abstracts_to_docx(modeladmin, request, queryset):
                 )
 
         # Add other details
-        doc.add_paragraph(f"Keywords: {abstract.keywords}")
+        doc.add_paragraph(f"Keywords: {', '.join(abstract.keywords.names())}")
         doc.add_paragraph(f"Status: {abstract.status}")
         
         # Add the abstract text itself
         doc.add_paragraph("Abstract:", style='Heading 3')
-        doc.add_paragraph(abstract.abstract)
+        doc.add_paragraph(strip_tags(abstract.abstract)) 
 
         # Divider between abstracts
         doc.add_paragraph("\n" + "-" * 40 + "\n")
@@ -228,7 +229,7 @@ class AbstractAdmin(ImportExportModelAdmin):
     search_fields = ('abstract_title', 'keywords', 'track__track_name')
     inlines = [AuthorInformationInline, PresenterInformationInline]
     ordering = ('-date_created',)
-    actions = ['mark_as_accepted', 'mark_as_rejected', 'mark_as_reviewed']
+    actions = [export_abstracts_to_docx,'mark_as_accepted', 'mark_as_rejected', 'mark_as_reviewed']
 
     def save_model(self, request, obj, form, change):
         super().save_model(request, obj, form, change)
