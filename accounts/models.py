@@ -5,6 +5,7 @@ from .managers import CustomUserManager
 class Users(AbstractUser):
     username = None
     email = models.EmailField(unique=True)
+    manager = models.BooleanField(default=False)
 
     def __str__(self):
         return self.email
