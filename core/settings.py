@@ -147,6 +147,8 @@ REST_FRAMEWORK = {
 #     }
 # }
 
+
+
 DATABASES = {
      'default': {
          'ENGINE': 'django.db.backends.postgresql',
@@ -236,8 +238,7 @@ IMPORT_EXPORT_SKIP_ADMIN_LOG = True
 PAYSTACK_SECRET_KEY = os.getenv('PAYSTACK_SECRET_KEY')
 PAYSTACK_PUBLIC_KEY = os.getenv('PAYSTACK_PUBLIC_KEY')
 PAYSTACK_CALLBACK_URL = os.getenv('PAYSTACK_CALLBACK_URL')
-SITE_URL = 'http://127.0.0.1:8000'
-
+SITE_URL = os.getenv('SITE_URL')
 
 
 
