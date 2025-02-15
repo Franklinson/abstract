@@ -140,28 +140,28 @@ REST_FRAMEWORK = {
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
-}
-
 # DATABASES = {
-#      'default': {
-#          'ENGINE': 'django.db.backends.postgresql',
-#          'NAME': os.environ["PGDATABASE"],
-#          'USER': os.environ["PGUSER"],
-#          'PASSWORD': os.environ["PGPASSWORD"],
-#          'HOST': os.environ["PGHOST"],
-#          'PORT': os.environ["PGPORT"],
-#          # 'default': dj_database_url.config(default=os.environ.get('DATABASE_URL')),
-#      }
-#  }
+#     'default': {
+#         'ENGINE': 'django.db.backends.sqlite3',
+#         'NAME': BASE_DIR / 'db.sqlite3',
+#     }
+# }
+
+DATABASES = {
+     'default': {
+         'ENGINE': 'django.db.backends.postgresql',
+         'NAME': os.environ["PGDATABASE"],
+         'USER': os.environ["PGUSER"],
+         'PASSWORD': os.environ["PGPASSWORD"],
+         'HOST': os.environ["PGHOST"],
+         'PORT': os.environ["PGPORT"],
+         # 'default': dj_database_url.config(default=os.environ.get('DATABASE_URL')),
+     }
+ }
 
 
-#  # # if POSTGRES_LOCALLY == True
-# DATABASES['default'] = dj_database_url.config(default=os.environ.get('DATABASE_URL', None))
+ # # if POSTGRES_LOCALLY == True
+DATABASES['default'] = dj_database_url.config(default=os.environ.get('DATABASE_URL', None))
 
 
 
