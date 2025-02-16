@@ -26,7 +26,9 @@ def register(request):
             subject = 'Your COND account has been created'
             template_name = 'emails/account_created.html'
 
-            context = {'first_name': user.first_name}
+            context = {'first_name': user.first_name,
+                       'email':user.email
+                       }
 
             # Use Celery task to send the confirmation email
             send_email_task.delay(

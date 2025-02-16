@@ -83,7 +83,7 @@ class Abstract(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, null=True)
     abstract_title = models.CharField(max_length=200)
     abstract = CKEditor5Field('Abstract', config_name='extends', validators=[validate_word_count])
-    keywords = TaggableManager()
+    keywords = TaggableManager(verbose_name= 'keywords', help_text='Seperate each keyword with comma(,)')
     attachment = models.FileField(upload_to='abstract_files')
     # event = models.ForeignKey(Event, on_delete=models.CASCADE)
     track = models.ForeignKey(Track, on_delete=models.CASCADE)
